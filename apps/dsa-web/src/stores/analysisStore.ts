@@ -3,12 +3,12 @@ import type { ParsedApiError } from '../api/error';
 import type { AnalysisResult, AnalysisReport } from '../types/analysis';
 
 interface AnalysisState {
-  // 分析状态
+  // State da Análise
   isLoading: boolean;
   result: AnalysisResult | null;
   error: ParsedApiError | null;
 
-  // 历史报告视图
+  // View de Relatório Histórico
   isHistoryView: boolean;
   historyReport: AnalysisReport | null;
 
@@ -22,7 +22,7 @@ interface AnalysisState {
 }
 
 export const useAnalysisStore = create<AnalysisState>((set) => ({
-  // 初始状态
+  // State Inicial
   isLoading: false,
   result: null,
   error: null,

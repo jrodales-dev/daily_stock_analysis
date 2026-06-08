@@ -211,7 +211,7 @@ function evaluateReleaseUpdate({ currentVersion, release, checkedAt = new Date()
       status: UPDATE_STATUS.ERROR,
       currentVersion: normalizedCurrentVersion,
       checkedAt,
-      message: '当前桌面端版本不是有效的语义化版本，无法检查更新。',
+      message: 'A versão atual do desktop não é uma versão semântica válida, não é possível verificar atualizações.',
     });
   }
 
@@ -221,7 +221,7 @@ function evaluateReleaseUpdate({ currentVersion, release, checkedAt = new Date()
       status: UPDATE_STATUS.ERROR,
       currentVersion: normalizedCurrentVersion,
       checkedAt,
-      message: 'GitHub Release 未返回可识别的语义化版本标签。',
+      message: 'O GitHub Release não retornou uma tag de versão semântica reconhecível.',
     });
   }
 
@@ -235,7 +235,7 @@ function evaluateReleaseUpdate({ currentVersion, release, checkedAt = new Date()
       checkedAt,
       releaseName: releaseMetadata.releaseName,
       tagName: releaseMetadata.tagName,
-      message: '版本比较失败，无法判断是否存在可用更新。',
+      message: 'Falha na comparação de versões, não foi possível determinar se há uma atualização disponível.',
     });
   }
 
@@ -249,7 +249,7 @@ function evaluateReleaseUpdate({ currentVersion, release, checkedAt = new Date()
       publishedAt: releaseMetadata.publishedAt,
       releaseName: releaseMetadata.releaseName,
       tagName: releaseMetadata.tagName,
-      message: `发现新版本 ${releaseMetadata.version}，可前往 GitHub Releases 下载更新。`,
+      message: `Nova versão ${releaseMetadata.version} encontrada, você pode ir para o GitHub Releases para baixar a atualização.`,
     });
   }
 
@@ -262,7 +262,7 @@ function evaluateReleaseUpdate({ currentVersion, release, checkedAt = new Date()
     publishedAt: releaseMetadata.publishedAt,
     releaseName: releaseMetadata.releaseName,
     tagName: releaseMetadata.tagName,
-    message: '当前桌面端已是最新版本。',
+    message: 'A versão atual do desktop já é a mais recente.',
   });
 }
 
@@ -646,7 +646,7 @@ function initLogging() {
   const appDir = resolveAppDir();
   logFilePath = path.join(appDir, 'logs', 'desktop.log');
   
-  // 确保日志目录存在
+  // Garante que o diretório de logs exista
   const logDir = path.dirname(logFilePath);
   ensureDirectory(logDir);
   
@@ -676,7 +676,7 @@ function decodeBackendOutput(data, decoder) {
 
   let decoded = decoder.decode(data, { stream: true });
 
-  // Windows 控制台 / 子进程有时仍会吐出本地代码页字节，优先在明显乱码时回退到 GBK。
+  // O console/subprocesso do Windows às vezes ainda emite bytes de página de código local, priorizando o retorno para GBK quando houver caracteres corrompidos óbvios.
   if (isWindows && decoded.includes('\uFFFD')) {
     try {
       decoded = new TextDecoder('gbk', { fatal: false }).decode(data, { stream: true });
@@ -711,7 +711,7 @@ function ensureEnvFile(envPath) {
     return;
   }
 
-  fs.writeFileSync(envPath, '# Configure your API keys and stock list here.\n', 'utf-8');
+  fs.writeFileSync(envPath, '# Configure suas chaves de API e lista de ações aqui.\n', 'utf-8');
 }
 
 function findAvailablePort(startPort = 8000, endPort = 8100) {
@@ -1202,12 +1202,12 @@ async function maybePromptDesktopUpdate(state) {
   const currentVersion = state.currentVersion || resolveDesktopVersion() || '当前版本';
   const result = await dialog.showMessageBox(mainWindow, {
     type: 'info',
-    buttons: ['稍后', '前往下载'],
+    buttons: ['Mais tarde', 'Ir para download'],
     defaultId: 1,
     cancelId: 0,
-    title: '发现新版本',
-    message: `检测到桌面端新版本 ${state.latestVersion}`,
-    detail: `当前版本 ${currentVersion}。新版本将跳转到 GitHub Releases 下载页，不会静默下载或自动安装。`,
+    title: 'Nova versão encontrada',
+    message: `Nova versão do desktop detectada: ${state.latestVersion}`,
+    detail: `Versão atual: ${currentVersion}. A nova versão redirecionará para a página de download do GitHub Releases, não será baixada silenciosamente ou instalada automaticamente.`,
     noLink: true,
   });
 
@@ -1219,10 +1219,10 @@ async function maybePromptDesktopUpdate(state) {
 async function installDownloadedUpdate() {
   const updater = getElectronAutoUpdater();
   if (!updater) {
-    throw new Error('当前运行模式不支持自动安装更新。');
+    throw new Error('O modo de execução atual não suporta a instalação automática de atualizações.');
   }
   if (desktopUpdateState?.status !== UPDATE_STATUS.UPDATE_DOWNLOADED) {
-    throw new Error('更新尚未下载完成，无法自动安装。');
+    throw new Error('A atualização ainda não terminou de ser baixada, não é possível instalar automaticamente.');
   }
 
   setDesktopUpdateState({
@@ -1230,7 +1230,7 @@ async function installDownloadedUpdate() {
     updateMode: UPDATE_MODE.AUTO,
     latestVersion: desktopUpdateState?.latestVersion || '',
     releaseUrl: desktopUpdateState?.releaseUrl || RELEASES_PAGE_URL,
-    message: '正在重启并安装更新...',
+    message: 'Reiniciando e instalando atualização...',
   });
   let backupRoot = null;
   try {
@@ -1252,7 +1252,7 @@ async function installDownloadedUpdate() {
             latestVersion: desktopUpdateState?.latestVersion || '',
             releaseUrl: desktopUpdateState?.releaseUrl || RELEASES_PAGE_URL,
             checkedAt: new Date().toISOString(),
-            message: `更新安装准备失败：${error instanceof Error ? error.message : String(error)}`,
+            message: `Falha na preparação para a instalação da atualização: ${error instanceof Error ? error.message : String(error)}`,
           });
           throw error;
         }
@@ -1287,12 +1287,12 @@ async function maybePromptInstallDownloadedUpdate(state) {
   lastPromptedInstallVersion = state.latestVersion;
   const result = await dialog.showMessageBox(mainWindow, {
     type: 'info',
-    buttons: ['稍后', '立即重启安装'],
+    buttons: ['Mais tarde', 'Reiniciar e instalar agora'],
     defaultId: 1,
     cancelId: 0,
-    title: '更新已下载',
-    message: `桌面端新版本 ${state.latestVersion} 已下载`,
-    detail: '重启应用后会自动完成安装。未保存的设置草稿请先保存。',
+    title: 'Atualização baixada',
+    message: `A nova versão do desktop ${state.latestVersion} foi baixada`,
+    detail: 'A instalação será concluída automaticamente após reiniciar o aplicativo. Por favor, salve quaisquer rascunhos de configurações não salvos primeiro.',
     noLink: true,
   });
 
@@ -1309,7 +1309,7 @@ async function maybePromptInstallDownloadedUpdate(state) {
         latestVersion: state.latestVersion || desktopUpdateState?.latestVersion || '',
         releaseUrl: state.releaseUrl || desktopUpdateState?.releaseUrl || RELEASES_PAGE_URL,
         checkedAt: new Date().toISOString(),
-        message: `更新安装失败：${message}。可先保存草稿并前往下载页，或稍后重试。`,
+        message: `Falha na instalação da atualização: ${message}. Você pode salvar o rascunho e ir para a página de download primeiro, ou tentar novamente mais tarde.`,
       });
     }
   }
@@ -1336,14 +1336,14 @@ function configureElectronAutoUpdater() {
       status: UPDATE_STATUS.CHECKING,
       updateMode: UPDATE_MODE.AUTO,
       currentVersion: resolveDesktopVersion(),
-      message: '正在检查桌面端更新...',
+      message: 'Verificando atualizações do desktop...',
     });
   });
 
   updater.on('update-available', (info = {}) => {
     const latestVersion = resolveUpdaterLatestVersion(info) || '最新版本';
     const nextState = buildElectronUpdaterState(UPDATE_STATUS.UPDATE_AVAILABLE, info, {
-      message: `发现新版本 ${latestVersion}，正在后台下载更新...`,
+      message: `Nova versão ${latestVersion} encontrada, baixando atualização em segundo plano...`,
     });
     setDesktopUpdateState(nextState);
     logLine(`[update] auto update available latest=${nextState.latestVersion || 'unknown'}`);
@@ -1351,7 +1351,7 @@ function configureElectronAutoUpdater() {
 
   updater.on('update-not-available', (info = {}) => {
     const nextState = buildElectronUpdaterState(UPDATE_STATUS.UP_TO_DATE, info, {
-      message: '当前桌面端已是最新版本。',
+      message: 'A versão atual do desktop já é a mais recente.',
     });
     setDesktopUpdateState(nextState);
     logLine(`[update] auto update not available current=${nextState.currentVersion || 'unknown'}`);
@@ -1369,8 +1369,8 @@ function configureElectronAutoUpdater() {
       totalBytes: progress.total,
       message:
         percent === null
-          ? '正在下载桌面端更新...'
-          : `正在下载桌面端更新（${percent.toFixed(percent % 1 === 0 ? 0 : 1)}%）...`,
+          ? 'Baixando atualização do desktop...'
+          : `Baixando atualização do desktop (${percent.toFixed(percent % 1 === 0 ? 0 : 1)}%)...`,
     });
     logLine(`[update] download progress percent=${nextState.downloadPercent ?? 'unknown'}`);
   });
@@ -1381,8 +1381,8 @@ function configureElectronAutoUpdater() {
       latestVersion,
       downloadPercent: 100,
       message: latestVersion
-        ? `新版本 ${latestVersion} 已下载，可重启应用完成安装。`
-        : '新版本已下载，可重启应用完成安装。',
+        ? `A nova versão ${latestVersion} foi baixada, reinicie o aplicativo para concluir a instalação.`
+        : 'A nova versão foi baixada, reinicie o aplicativo para concluir a instalação.',
     });
     setDesktopUpdateState(nextState);
     logLine(`[update] downloaded latest=${nextState.latestVersion || 'unknown'}`);
@@ -1399,7 +1399,7 @@ function configureElectronAutoUpdater() {
       latestVersion: desktopUpdateState?.latestVersion || '',
       releaseUrl: desktopUpdateState?.releaseUrl || RELEASES_PAGE_URL,
       checkedAt: new Date().toISOString(),
-      message: `自动更新失败：${message}`,
+      message: `Falha na atualização automática: ${message}`,
     });
   });
 
@@ -1410,7 +1410,7 @@ function configureElectronAutoUpdater() {
 async function performElectronUpdaterCheck({ manual = false } = {}) {
   const updater = configureElectronAutoUpdater();
   if (!updater) {
-    throw new Error('当前平台不支持自动安装更新。');
+    throw new Error('A plataforma atual não suporta a instalação automática de atualizações.');
   }
   if (electronUpdateCheckInFlight) {
     return desktopUpdateState;
@@ -1421,7 +1421,7 @@ async function performElectronUpdaterCheck({ manual = false } = {}) {
     status: UPDATE_STATUS.CHECKING,
     updateMode: UPDATE_MODE.AUTO,
     currentVersion: resolveDesktopVersion(),
-    message: manual ? '正在检查桌面端更新...' : '正在后台检查桌面端更新...',
+    message: manual ? 'Verificando atualizações do desktop...' : 'Verificando atualizações do desktop em segundo plano...',
   });
 
   try {
@@ -1435,7 +1435,7 @@ async function performElectronUpdaterCheck({ manual = false } = {}) {
       updateMode: UPDATE_MODE.AUTO,
       currentVersion: resolveDesktopVersion(),
       checkedAt: new Date().toISOString(),
-      message: manual ? `检查更新失败：${message}` : '',
+      message: manual ? `Falha ao verificar atualizações: ${message}` : '',
     });
     return nextState;
   } finally {
@@ -1452,7 +1452,7 @@ async function performDesktopUpdateCheck({ manual = false, notify = false } = {}
   setDesktopUpdateState({
     status: UPDATE_STATUS.CHECKING,
     currentVersion,
-    message: manual ? '正在检查桌面端更新...' : '正在后台检查桌面端更新...',
+    message: manual ? 'Verificando atualizações do desktop...' : 'Verificando atualizações do desktop em segundo plano...',
   });
 
   try {
@@ -1474,7 +1474,7 @@ async function performDesktopUpdateCheck({ manual = false, notify = false } = {}
         status: UPDATE_STATUS.ERROR,
         currentVersion,
         checkedAt: new Date().toISOString(),
-        message: `检查更新失败：${message}`,
+        message: `Falha ao verificar atualizações: ${message}`,
       });
     }
 
@@ -1510,10 +1510,10 @@ async function createWindow() {
   }
   const restoreFailed = Boolean(restoreResult && restoreResult.failed.length);
   const restoreIssueDetails = restoreResult
-    ? restoreResult.failed.join('；')
+    ? restoreResult.failed.join('; ')
     : '';
   const restoreErrorMessage = restoreFailed
-    ? `上次更新安装未完成或恢复运行时文件失败，已保留备份目录 ${restoreResult.backupRoot}，请确认后手动恢复并重启应用。明细：${restoreIssueDetails}`
+    ? `A última instalação de atualização não foi concluída ou falhou ao restaurar os arquivos de tempo de execução. O diretório de backup ${restoreResult.backupRoot} foi mantido. Por favor, confirme e restaure manualmente antes de reiniciar o aplicativo. Detalhes: ${restoreIssueDetails}`
     : '';
   setDesktopUpdateState({
     status: restoreFailed ? UPDATE_STATUS.ERROR : UPDATE_STATUS.IDLE,

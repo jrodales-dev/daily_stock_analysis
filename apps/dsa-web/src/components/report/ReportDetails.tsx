@@ -1,18 +1,19 @@
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import type { ReportDetails as ReportDetailsType, ReportLanguage } from '../../types/analysis';
+import { ChevronDown, FileCode } from 'lucide-react';
 import { Card } from '../common';
 import { DashboardPanelHeader } from '../dashboard';
 import { getReportText, normalizeReportLanguage } from '../../utils/reportLanguage';
 
 interface ReportDetailsProps {
   details?: ReportDetailsType;
-  recordId?: number;  // 分析历史记录主键 ID
+  recordId?: number;  // ID da Chave Primária do Relatório Histórico
   language?: ReportLanguage;
 }
 
 /**
- * 透明度与追溯区组件 - 终端风格
+ * Componente Transparência e Zona de Rastreamento
  */
 export const ReportDetails: React.FC<ReportDetailsProps> = ({
   details,
@@ -92,26 +93,37 @@ export const ReportDetails: React.FC<ReportDetailsProps> = ({
   };
 
   return (
-    <Card variant="bordered" padding="md" className="home-panel-card text-left">
-      <DashboardPanelHeader
-        eyebrow={text.transparency}
-        title={text.traceability}
-        className="mb-3"
-      />
+    <Card variant="bordered" padding="none" className="home-panel-card text-left">
+      <details className="group">
+        <summary className="cursor-pointer list-none px-4 py-4 group-open:pb-0 group-open:mb-4 focus:outline-none">
+          <DashboardPanelHeader
+            title={text.traceability}
+            className="mb-0"
+            leading={(
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan/10 text-cyan">
+                <FileCode className="h-4 w-4" aria-hidden="true" />
+              </span>
+            )}
+            actions={(
+              <ChevronDown className="h-4 w-4 text-muted-text transition-transform group-open:rotate-180" aria-hidden="true" />
+            )}
+          />
+        </summary>
 
-      {/* Record ID */}
-      {recordId && (
-        <div className="home-divider mb-3 flex items-center gap-2 border-b pb-3 text-xs text-muted-text">
-          <span>{text.recordId}:</span>
-          <code className="home-accent-chip px-1.5 py-0.5 font-mono text-xs">
-            {recordId}
-          </code>
-        </div>
-      )}
+        <div className="home-divider space-y-4 border-t px-4 pb-4 pt-3">
+          {/* Record ID */}
+          {recordId && (
+            <div className="flex items-center gap-2 text-xs text-muted-text">
+              <span>{text.recordId}:</span>
+              <code className="home-accent-chip px-1.5 py-0.5 font-mono text-xs">
+                {recordId}
+              </code>
+            </div>
+          )}
 
-      {/* 折叠区域 */}
-      <div className="space-y-2">
-        {/* 原始分析结果 */}
+          {/* Área Retrátil */}
+          <div className="space-y-2">
+        {/* Resultado bruto da análise */}
         {details?.rawResult && (
           <div>
             <button
@@ -137,7 +149,7 @@ export const ReportDetails: React.FC<ReportDetailsProps> = ({
           </div>
         )}
 
-        {/* 分析快照 */}
+        {/* Snapshot de Análise */}
         {details?.contextSnapshot && (
           <div>
             <button
@@ -163,6 +175,8 @@ export const ReportDetails: React.FC<ReportDetailsProps> = ({
           </div>
         )}
       </div>
+        </div>
+      </details>
     </Card>
   );
 };

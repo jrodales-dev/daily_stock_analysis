@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [improve] Translate all hardcoded Chinese strings in `src/services/run_diagnostics.py` to Portuguese: component labels (Cotação em Tempo Real, Dados Diários, Busca de Notícias, Notificações, Histórico), status labels, and all generated diagnostic messages.
+- [fix] Fix `_generate_single_stock_markdown` in `src/services/history_service.py` to correctly use Portuguese labels instead of falling back to Chinese when `report_language=pt`. Affected labels: Data de Análise, Hora do Relatório, Justificativa, Aviso de Risco, Análise Técnica, Médias Móveis, Notícias. Also fixed `_get_sentiment_label` to use the shared localized helper.
+- [fix] Translate market review (`src/market_analyzer.py`, `src/core/market_review.py`) to Portuguese when `REPORT_LANGUAGE=pt`: titles, section headings, LLM prompt, template report, market breadth stats, sector blocks, market light labels, mood texts, news catalysts, and all fallback strings now use Portuguese instead of Chinese.
+
 - [改进] AlphaSift 选股入口在 Web 侧边栏中移动到“问股”下方，贴近 Agent/研究辅助工作流。
 - [改进] Docker 镜像构建阶段预置默认 AlphaSift 适配层，与桌面发布包一样避免运行期额外安装。
 - [新功能] 新增默认关闭的 AlphaSift 选股页签，通过 `ALPHASIFT_ENABLED` 开启后经由稳定适配层读取策略并执行选股。
@@ -38,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [文档] 明确同股历史趋势新增模型字段为历史快照展示元数据，不影响运行时 LLM Provider/Model/Base URL 路由与配置迁移清理；回退方式为按常规发布回滚本变更。
 
 - [修复] 收口 Web 中文界面残留英文文案与设置页 help 缺口，回测页改为中文展示，并让 Web 设置页仅展示已注册且带说明的配置项。
+- [fix] Tradução de textos em chinês remanescentes no painel de contexto de dados (Data Context) da home page e backend.
 
 - [修复] Windows 桌面端自动更新静默安装时显式复用当前安装目录，避免自定义安装目录场景下卸载旧版本文件失败。
 - [修复] Windows 安装器重试旧卸载器时对 `_?=` 安装目录参数加引号，修复旧版本安装在带空格路径时返回 2 导致自动更新失败。
@@ -66,6 +71,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [改进] 优化 Web 报告详情页信息层级，将输入数据块和运行诊断下移为主体内容后的折叠辅助信息。
 - [新功能] 市场阶段低敏摘要接入历史详情、同步分析响应和 completed 任务状态的 report metadata。
 - [改进] 盘中分析补齐实时行情获取时间、provider 时间、stale、fallback 与 partial/estimated 标记，供 AnalysisContextPack 映射输入数据限制。
+- [improve] Tradução de arquivos abertos e localização do dashboard, histórico, sentimentos e estratégias AlphaSift para Português.
+- [improve] Localização de logs e mensagens de erro do SearXNG e buscas em src/search_service.py para Português.
+- [fix] Correção de overflow vertical e horizontal na barra lateral de navegação (Shell e SidebarNav) para suportar termos em Português.
 
 ## [3.19.0] - 2026-05-29
 

@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-API v1 路由聚合
+Agregação de Rotas da API v1
 ===================================
 
-职责：
-1. 聚合 v1 版本的所有 endpoint 路由
-2. 统一添加 /api/v1 前缀
+Responsabilidades:
+1. Agregar todas as rotas de endpoint da versão v1
+2. Adicionar o prefixo /api/v1 de forma unificada
 """
 
 from fastapi import APIRouter
 
 from api.v1.endpoints import alerts, analysis, auth, history, stocks, backtest, system_config, agent, usage, portfolio, alphasift
 
-# 创建 v1 版本主路由
+# Cria a rota principal da versão v1
 router = APIRouter(prefix="/api/v1")
 
 router.include_router(

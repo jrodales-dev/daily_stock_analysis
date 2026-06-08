@@ -23,7 +23,6 @@ type SubmitAnalysisOptions = {
   stockName?: string;
   originalQuery?: string;
   selectionSource?: SelectionSource;
-  notify?: boolean;
   forceRefresh?: boolean;
   skills?: string[];
 };
@@ -39,7 +38,6 @@ const dismissedTaskIds = new Set<string>();
 export interface StockPoolState {
   query: string;
   selectionSource: SelectionSource;
-  notify: boolean;
   inputError?: string;
   duplicateError: string | null;
   error: ParsedApiError | null;
@@ -81,7 +79,6 @@ export interface StockPoolState {
   toggleSelectAllVisible: () => void;
   deleteSelectedHistory: () => Promise<void>;
   submitAnalysis: (options?: SubmitAnalysisOptions) => Promise<void>;
-  setNotify: (notify: boolean) => void;
   syncTaskCreated: (task: TaskInfo) => void;
   syncTaskUpdated: (task: TaskInfo) => void;
   syncTaskFailed: (task: TaskInfo) => void;
@@ -93,7 +90,6 @@ export interface StockPoolState {
 const initialState = {
   query: '',
   selectionSource: 'manual' as SelectionSource,
-  notify: true,
   inputError: undefined,
   duplicateError: null,
   error: null,
@@ -378,8 +374,6 @@ export const useStockPoolStore = create<StockPoolState>((set, get) => ({
 
   clearInlineMessages: () => set({ inputError: undefined, duplicateError: null }),
 
-  setNotify: (notify) => set({ notify }),
-
   openMarkdownDrawer: () => set({ markdownDrawerOpen: true }),
 
   closeMarkdownDrawer: () => set({ markdownDrawerOpen: false }),
@@ -548,17 +542,16 @@ export const useStockPoolStore = create<StockPoolState>((set, get) => ({
     const stockName = options?.stockName;
     const selectionSource = options?.selectionSource ?? state.selectionSource;
     const originalQuery = (options?.originalQuery ?? state.query).trim();
-    const notify = options?.notify ?? state.notify;
     const forceRefresh = options?.forceRefresh ?? false;
     const skills = options?.skills;
 
     if (!stockCodeInput) {
-      set({ inputError: '请输入股票代码', duplicateError: null });
+      set({ inputError: 'Informe o Ticker da Ação', duplicateError: null });
       return;
     }
 
     if (selectionSource !== 'autocomplete' && isObviouslyInvalidStockQuery(stockCodeInput)) {
-      set({ inputError: '请输入有效的股票代码或股票名称', duplicateError: null });
+      set({ inputError: 'Não há Ticker correspondente.', duplicateError: null });
       return;
     }
 
@@ -587,7 +580,6 @@ export const useStockPoolStore = create<StockPoolState>((set, get) => ({
         stockName,
         originalQuery: originalQuery || stockCodeInput,
         selectionSource,
-        notify,
         forceRefresh,
         skills,
       });
@@ -607,7 +599,7 @@ export const useStockPoolStore = create<StockPoolState>((set, get) => ({
 
       if (error instanceof DuplicateTaskError) {
         set({
-          duplicateError: `股票 ${error.stockCode} 正在分析中，请等待完成`,
+          duplicateError: `A ação ${error.stockCode} já está em andamento. Fila em processamento!!!`,
         });
         return;
       }
@@ -646,7 +638,7 @@ export const useStockPoolStore = create<StockPoolState>((set, get) => ({
 
   syncTaskFailed: (task) => {
     get().syncTaskUpdated(task);
-    set({ error: getParsedApiError(task.error || '分析失败') });
+    set({ error: getParsedApiError(task.error || 'Erro Crítico') });
   },
 
   refreshActiveTasks: async () => {

@@ -33,25 +33,25 @@ class _LiteLLMPlaceholder:
 # Keep a patchable module attribute while still avoiding a hard import at module load.
 litellm = sys.modules.get("litellm") or _LiteLLMPlaceholder()
 
-EXTRACT_PROMPT = """请分析这张股票市场截图或图片，提取其中所有可见的股票代码及名称。
+EXTRACT_PROMPT = """Please analyze this stock market screenshot or image and extract all visible stock codes and names from it.
 
-重要：若图中同时显示股票名称和代码（如自选股列表、ETF 列表），必须同时提取两者，每个元素必须包含 code 和 name 字段。
+IMPORTANT: If the image shows both the stock name and code (such as a watchlist or ETF list), you must extract both. Each element must contain both the 'code' and 'name' fields.
 
-输出格式：仅返回有效的 JSON 数组，不要 markdown、不要解释。
-每个元素为对象：{"code":"股票代码","name":"股票名称","confidence":"high|medium|low"}
-- code: 必填，股票代码（A股6位、港股5位、美股1-5字母、ETF 如 159887/512880）
-- name: 若图中有名称则必填（如 贵州茅台、银行ETF、证券ETF），与代码一一对应；仅当图中确实无名称时可省略
-- confidence: 必填，识别置信度，high=确定、medium=较确定、low=不确定
+Output format: Return ONLY a valid JSON array. Do not use markdown blocks, and do not provide any explanations.
+Each element should be an object: {"code":"StockCode","name":"StockName","confidence":"high|medium|low"}
+- code: Required, the stock code (A-shares are 6 digits, HK stocks are 5 digits, US stocks are 1-5 letters, ETFs like 159887/512880).
+- name: Required if the name is present in the image (e.g., Kweichow Moutai, Bank ETF), corresponding to the code. Can be omitted ONLY if the name is genuinely missing from the image.
+- confidence: Required, identification confidence level (high=certain, medium=fairly certain, low=uncertain).
 
-示例（图中同时有名称和代码时）：
-- 个股：600519 贵州茅台、300750 宁德时代
-- 港股：00700 腾讯控股、09988 阿里巴巴
-- 美股：AAPL 苹果、TSLA 特斯拉
-- ETF：159887 银行ETF、512880 证券ETF、512000 券商ETF、512480 半导体ETF、515030 新能源车ETF
+Examples (when both name and code are present):
+- Individual Stocks: 600519 Kweichow Moutai, 300750 CATL
+- HK Stocks: 00700 Tencent, 09988 Alibaba
+- US Stocks: AAPL Apple, TSLA Tesla
+- ETFs: 159887 Bank ETF, 512880 Securities ETF, 512000 Brokerage ETF, 512480 Semiconductor ETF, 515030 NEV ETF
 
-输出示例：[{"code":"600519","name":"贵州茅台","confidence":"high"},{"code":"159887","name":"银行ETF","confidence":"high"}]
+Output example: [{"code":"600519","name":"Kweichow Moutai","confidence":"high"},{"code":"159887","name":"Bank ETF","confidence":"high"}]
 
-禁止只返回代码数组如 ["159887","512880"]，必须使用对象格式。若未找到任何股票代码，返回：[]"""
+DO NOT return a plain array of codes like ["159887","512880"], you must use the object format. If no stock codes are found, return: []"""
 
 # Valid confidence values; invalid ones normalized to medium
 _VALID_CONFIDENCE = frozenset({"high", "medium", "low"})

@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 class MarkdownReportGenerationError(Exception):
     """Exception raised when Markdown report generation fails due to internal errors."""
 
-    def __init__(self, message: str, record_id: str = None):
+    def __init__(self, message: str, record_id: Optional[str] = None):
         self.message = message
         self.record_id = record_id
         super().__init__(self.message)
@@ -70,14 +70,14 @@ class HistoryService:
 
     @staticmethod
     def _history_code_filter_candidates(stock_code: str) -> List[str]:
-        raw_code = str(stock_code or "").strip()
+        raw_code = (stock_code or "").strip()
         if not raw_code:
             return []
 
         candidates: List[str] = []
 
         def add(candidate: str) -> None:
-            candidate = str(candidate or "").strip().upper()
+            candidate = (candidate or "").strip().upper()
             if candidate and candidate not in candidates:
                 candidates.append(candidate)
 
@@ -153,8 +153,9 @@ class HistoryService:
             Dictionary containing total count and items
         """
         try:
+            stock_codes: Optional[List[str]] = None
             if stock_code:
-                stock_code = self._history_code_filter_candidates(stock_code)
+                stock_codes = self._history_code_filter_candidates(stock_code)
 
             # Parse date parameters
             start_dt = None
@@ -177,7 +178,7 @@ class HistoryService:
             
             # Use new paginated query method
             records, total = self.db.get_analysis_history_paginated(
-                code=stock_code,
+                code=stock_codes if stock_code else None,
                 start_date=start_dt,
                 end_date=end_dt,
                 offset=offset,
@@ -332,7 +333,7 @@ class HistoryService:
             if not record:
                 logger.warning(f"resolve_and_get_news: record not found for {record_id}")
                 return []
-            return self.get_news_intel(query_id=record.query_id, limit=limit)
+            return self.get_news_intel(query_id=str(record.query_id or ""), limit=limit)
         except Exception as e:
             logger.error(f"resolve_and_get_news failed for {record_id}: {e}", exc_info=True)
             return []
@@ -526,9 +527,9 @@ class HistoryService:
                 if len(snippet) > 200:
                     snippet = f"{snippet[:197]}..."
                 items.append({
-                    "title": record.title,
-                    "snippet": snippet,
-                    "url": record.url,
+                    "title": str(record.title or ""),
+                    "snippet": str(snippet or ""),
+                    "url": str(record.url or ""),
                 })
 
             return items
@@ -558,7 +559,7 @@ class HistoryService:
                 return []
 
             # Get query_id from record, then call original method
-            return self.get_news_intel(query_id=record.query_id, limit=limit)
+            return self.get_news_intel(query_id=str(record.query_id or ""), limit=limit)
 
         except Exception as e:
             logger.error(f"根据 record_id 查询新闻情报失败: {e}", exc_info=True)
@@ -582,7 +583,7 @@ class HistoryService:
 
         # Narrow down to same-stock recent news, then filter by analysis time window.
         days = max(1, (datetime.now() - analysis.created_at).days + 1)
-        candidates = self.db.get_recent_news(code=analysis.code, days=days, limit=max(limit * 5, 50))
+        candidates = self.db.get_recent_news(code=str(analysis.code or ""), days=days, limit=max(limit * 5, 50))
 
         start_time = analysis.created_at - timedelta(hours=6)
         end_time = analysis.created_at + timedelta(hours=6)
@@ -627,16 +628,10 @@ class HistoryService:
         Returns:
             Sentiment label
         """
-        if score >= 80:
-            return "极度乐观"
-        elif score >= 60:
-            return "乐观"
-        elif score >= 40:
-            return "中性"
-        elif score >= 20:
-            return "悲观"
-        else:
-            return "极度悲观"
+        # Delegate to the shared localized helper (uses zh by default here;
+        # callers that need a specific language should use get_sentiment_label directly).
+        from src.report_language import get_sentiment_label as _localized_label
+        return _localized_label(score, "zh")
 
     def get_markdown_report(self, record_id: str) -> Optional[str]:
         """
@@ -726,8 +721,8 @@ class HistoryService:
 
             # Build AnalysisResult with available data
             return AnalysisResult(
-                code=raw_result.get("code", record.code),
-                name=raw_result.get("name", record.name),
+                code=raw_result.get("code") or str(record.code or ""),
+                name=raw_result.get("name") or str(record.name or ""),
                 sentiment_score=raw_result.get("sentiment_score", record.sentiment_score or 50),
                 trend_prediction=raw_result.get("trend_prediction", record.trend_prediction or ""),
                 operation_advice=raw_result.get("operation_advice", record.operation_advice or ""),
@@ -787,14 +782,46 @@ class HistoryService:
         report_time = record.created_at.strftime("%H:%M:%S") if record.created_at else datetime.now().strftime("%H:%M:%S")
         report_language = normalize_report_language(getattr(result, "report_language", "zh"))
         labels = get_report_labels(report_language)
-        analysis_date_label = "Analysis Date" if report_language == "en" else "分析日期"
-        report_time_label = "Report Time" if report_language == "en" else "报告生成时间"
-        reason_label = "Rationale" if report_language == "en" else "操作理由"
-        risk_warning_label = "Risk Warning" if report_language == "en" else "风险提示"
-        technical_heading = "Technicals" if report_language == "en" else "技术面"
-        ma_label = "Moving Averages" if report_language == "en" else "均线"
-        volume_analysis_label = "Volume" if report_language == "en" else "量能"
-        news_heading = "News Flow" if report_language == "en" else "消息面"
+        analysis_date_label = (
+            "Analysis Date" if report_language == "en"
+            else "Data de Análise" if report_language == "pt"
+            else "分析日期"
+        )
+        report_time_label = (
+            "Report Time" if report_language == "en"
+            else "Hora do Relatório" if report_language == "pt"
+            else "报告生成时间"
+        )
+        reason_label = (
+            "Rationale" if report_language == "en"
+            else "Justificativa" if report_language == "pt"
+            else "操作理由"
+        )
+        risk_warning_label = (
+            "Risk Warning" if report_language == "en"
+            else "Aviso de Risco" if report_language == "pt"
+            else "风险提示"
+        )
+        technical_heading = (
+            "Technicals" if report_language == "en"
+            else "Análise Técnica" if report_language == "pt"
+            else "技术面"
+        )
+        ma_label = (
+            "Moving Averages" if report_language == "en"
+            else "Médias Móveis" if report_language == "pt"
+            else "均线"
+        )
+        volume_analysis_label = (
+            "Volume" if report_language == "en"
+            else "Volume" if report_language == "pt"
+            else "量能"
+        )
+        news_heading = (
+            "News Flow" if report_language == "en"
+            else "Notícias" if report_language == "pt"
+            else "消息面"
+        )
 
         # Escape markdown special characters in stock name
         name_escaped = self._escape_md(

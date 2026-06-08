@@ -43,6 +43,13 @@ _CHINESE_SECTION_PATTERNS = {
     "news_catalysts": r"###\s*五、(?:消息催化|后市展望)",
 }
 
+_PORTUGUESE_SECTION_PATTERNS = {
+    "market_summary": r"###\s*(?:1\.\s*)?(?:Resumo do Mercado|Sumário)",
+    "index_commentary": r"###\s*(?:2\.\s*)?(?:Análise dos Índices|Índices Principais)",
+    "sector_highlights": r"###\s*(?:4\.\s*)?(?:Setores em Destaque|Setores|Destaques)",
+    "news_catalysts": r"###\s*(?:5\.\s*)?(?:Catálisadores|Notícias)",
+}
+
 
 @dataclass
 class MarketIndex:
@@ -155,18 +162,25 @@ class MarketAnalyzer:
         if self.region == "us":
             return "US market"
         if self.region == "hk":
-            return "Hong Kong market" if review_language == "en" else "港股市场"
+            if review_language == "en":
+                return "Hong Kong market"
+            if review_language == "pt":
+                return "mercado de Hong Kong"
+            return "港股市场"
         if review_language == "en":
             return "A-share market"
+        if review_language == "pt":
+            return "mercado de ações A"
         return "A股市场"
 
     def _get_turnover_unit_label(self) -> str:
         """Return the turnover unit label for the current market/language."""
+        lang = self._get_review_language()
         if self.region == "us":
-            return "USD bn" if self._get_review_language() == "en" else "十亿美元"
+            return "USD bn" if lang != "zh" else "十亿美元"
         if self.region == "hk":
-            return "HKD bn" if self._get_review_language() == "en" else "十亿港元"
-        return "CNY 100m" if self._get_review_language() == "en" else "亿"
+            return "HKD bn" if lang != "zh" else "十亿港元"
+        return "CNY 100m" if lang != "zh" else "亿"
 
     def _format_turnover_value(self, amount_raw: float) -> str:
         """Format raw turnover according to market-specific units."""
@@ -187,9 +201,14 @@ class MarketAnalyzer:
         return "🟢" if change_pct > 0 else "🔴"
 
     def _get_review_title(self, date: str) -> str:
-        if self._get_review_language() == "en":
+        lang = self._get_review_language()
+        if lang == "en":
             market_names = {"us": "US Market Recap", "hk": "HK Market Recap"}
             market_name = market_names.get(self.region, "A-share Market Recap")
+            return f"## {date} {market_name}"
+        if lang == "pt":
+            market_names = {"us": "Revisão do Mercado Americano", "hk": "Revisão do Mercado de HK"}
+            market_name = market_names.get(self.region, "Revisão do Mercado")
             return f"## {date} {market_name}"
         return f"## {date} 大盘复盘"
 
@@ -284,6 +303,14 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
                 "mild_down": "mild losses",
                 "strong_down": "clear weakness",
                 "range": "range-bound trading",
+            }
+        elif review_language == "pt":
+            mapping = {
+                "strong_up": "forte alta",
+                "mild_up": "leve alta",
+                "mild_down": "leve queda",
+                "strong_down": "queda acentuada",
+                "range": "consolidação lateral",
             }
         else:
             mapping = {
@@ -502,9 +529,12 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
         indices_block = self._build_indices_block(overview)
         sector_block = self._build_sector_block(overview)
         news_block = self._build_news_block(news or [])
+        lang = self._get_review_language()
         patterns = (
             _ENGLISH_SECTION_PATTERNS
-            if self._get_review_language() == "en"
+            if lang == "en"
+            else _PORTUGUESE_SECTION_PATTERNS
+            if lang == "pt"
             else _CHINESE_SECTION_PATTERNS
         )
 
@@ -562,7 +592,7 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
         has_stats = overview.up_count or overview.down_count or overview.total_amount
         if not has_stats:
             return ""
-        if self._get_review_language() == "en":
+        if self._get_review_language() != "zh":
             light = self.build_market_light_snapshot(overview)
             return "\n".join(
                 [
@@ -607,7 +637,7 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
         else:
             status = "red"
 
-        if self._get_review_language() == "en":
+        if self._get_review_language() != "zh":
             label_map = {
                 "green": "risk-on",
                 "yellow": "balanced",
@@ -633,7 +663,7 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
             reasons = self._build_market_light_reasons_zh(overview, score)
 
         snapshot = MarketLightSnapshot(
-            region=self.region,
+            region=cast(Literal["cn", "hk", "us"], self.region),
             trade_date=overview.date,
             status=status,
             label=label_map[status],
@@ -642,7 +672,7 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
             reasons=reasons,
             guidance=guidance_map[status],
             dimensions=scores["dimensions"],
-            data_quality=str(scores["data_quality"]),
+            data_quality=cast(Literal["ok", "partial", "unavailable"], scores["data_quality"]),
         )
         return snapshot.model_dump()
 
@@ -693,10 +723,10 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
         return reasons[:4]
 
     def _build_indices_block(self, overview: MarketOverview) -> str:
-        """构建指数行情表格"""
+        """Build indices table block."""
         if not overview.indices:
             return ""
-        if self._get_review_language() == "en":
+        if self._get_review_language() != "zh":
             lines = [
                 f"| Index | Last | Change % | Open | High | Low | Amplitude | Turnover ({self._get_turnover_unit_label()}) |",
                 "|-------|------|----------|------|------|-----|-----------|-----------------|",
@@ -721,9 +751,10 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
         """Build sector ranking block."""
         if not overview.top_sectors and not overview.bottom_sectors:
             return ""
+        lang = self._get_review_language()
         lines = []
         if overview.top_sectors:
-            if self._get_review_language() == "en":
+            if lang != "zh":
                 lines.extend([
                     "#### Leading Sectors",
                     "| Rank | Sector | Change |",
@@ -742,7 +773,7 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
         if overview.bottom_sectors:
             if lines:
                 lines.append("")
-            if self._get_review_language() == "en":
+            if lang != "zh":
                 lines.extend([
                     "#### Lagging Sectors",
                     "| Rank | Sector | Change |",
@@ -765,7 +796,7 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
         if not news:
             return ""
         language = self._get_review_language()
-        if language == "en":
+        if language != "zh":
             lines = [
                 "#### News Catalysts",
             ]
@@ -790,7 +821,7 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
 
     @classmethod
     def _format_news_catalyst_line(cls, idx: int, item: Any, *, language: str = "zh") -> str:
-        fallback_title = "Untitled catalyst" if language == "en" else "未命名线索"
+        fallback_title = "Untitled catalyst" if language != "zh" else "未命名线索"
         title = cls._compact_news_text(cls._get_news_field(item, "title"), limit=90) or fallback_title
         source = cls._compact_news_text(cls._get_news_field(item, "source"), limit=40)
         date_text = cls._compact_news_text(cls._get_news_field(item, "published_date"), limit=24)
@@ -799,7 +830,7 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
         if url:
             title_text = f"[{title_text}]({url})"
         meta_parts = [part for part in (source, date_text) if part]
-        if language == "en":
+        if language != "zh":
             meta = f" ({' / '.join(meta_parts)})" if meta_parts else ""
         else:
             meta = f"（{' / '.join(meta_parts)}）" if meta_parts else ""
@@ -807,7 +838,7 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
 
     @staticmethod
     def _compact_news_text(value: str, *, limit: int) -> str:
-        text = " ".join(str(value or "").split())
+        text = " ".join((value or "").split())
         if limit <= 0 or len(text) <= limit:
             return text
         return text[: max(0, limit - 3)].rstrip() + "..."
@@ -835,18 +866,18 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
     @staticmethod
     def _describe_turnover(total_amount: float) -> str:
         if total_amount >= 15000:
-            return "高活跃度"
+            return "Alto Volume"
         if total_amount >= 9000:
-            return "中等活跃"
+            return "Volume Moderado"
         if total_amount > 0:
-            return "缩量观望"
-        return "暂无数据"
+            return "Volume Reduzido"
+        return "Sem Dados"
 
     def _build_market_light_scores(self, overview: MarketOverview) -> Dict[str, Any]:
         """Build the canonical Market Light scores used by reports and alerts."""
 
         participants = overview.up_count + overview.down_count
-        breadth_available = bool(self.profile.has_market_stats and participants > 0)
+        breadth_available = bool(self.profile.has_market_stats) and participants > 0
         breadth_score = 50
         if breadth_available:
             breadth_score = int(overview.up_count / participants * 100)
@@ -859,7 +890,7 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
             index_score = int(max(0, min(100, 50 + avg_change * 12)))
 
         limit_total = overview.limit_up_count + overview.limit_down_count
-        limit_available = bool(self.profile.has_market_stats and limit_total > 0)
+        limit_available = bool(self.profile.has_market_stats) and limit_total > 0
         limit_score = 50
         if limit_available:
             limit_score = int(overview.limit_up_count / limit_total * 100)
@@ -878,7 +909,7 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
             data_quality = "partial"
 
         score = int(round(breadth_score * 0.45 + index_score * 0.35 + limit_score * 0.20))
-        if self._get_review_language() == "en":
+        if self._get_review_language() != "zh":
             if score >= 70:
                 label = "risk-on"
             elif score >= 55:
@@ -955,6 +986,21 @@ Leading: {top_sectors_text if top_sectors_text else "N/A"}
 Lagging: {bottom_sectors_text if bottom_sectors_text else "N/A"}"""
             else:
                 sector_block = "## Sector Performance\n(Sector data not available for this market.)"
+        elif review_language == "pt":
+            if self.profile.has_market_stats:
+                stats_block = f"""## Amplitude do Mercado
+- Altas: {overview.up_count} | Baixas: {overview.down_count} | Estáveis: {overview.flat_count}
+- Limite de Alta: {overview.limit_up_count} | Limite de Baixa: {overview.limit_down_count}
+- Volume: {overview.total_amount:.0f} ({self._get_turnover_unit_label()})"""
+            else:
+                stats_block = "## Amplitude do Mercado\n(Dados de amplitude não disponíveis para este mercado.)"
+
+            if self.profile.has_sector_rankings:
+                sector_block = f"""## Desempenho Setorial
+Liderando: {top_sectors_text if top_sectors_text else "N/A"}
+Atrasado: {bottom_sectors_text if bottom_sectors_text else "N/A"}"""
+            else:
+                sector_block = "## Desempenho Setorial\n(Dados setoriais não disponíveis para este mercado.)"
         else:
             if self.profile.has_market_stats:
                 stats_block = f"""## 市场概况
@@ -984,6 +1030,14 @@ Lagging: {bottom_sectors_text if bottom_sectors_text else "N/A"}"""
             )
             indices_placeholder = indices_text if indices_text else "No index data (API error)"
             news_placeholder = news_text if news_text else "No relevant news"
+        elif review_language == "pt":
+            data_no_indices_hint = (
+                "Nota: Falha ao obter dados de mercado. Baseie a análise qualitativa nas [Notícias do Mercado]. Não invente pontos de índice."
+                if not indices_text
+                else ""
+            )
+            indices_placeholder = indices_text if indices_text else "Sem dados de índice (erro de API)"
+            news_placeholder = news_text if news_text else "Sem notícias relevantes"
         else:
             indices_placeholder = indices_text if indices_text else "暂无指数数据（接口异常）"
             news_placeholder = news_text if news_text else "暂无相关新闻"
@@ -1050,6 +1104,70 @@ Lagging: {bottom_sectors_text if bottom_sectors_text else "N/A"}"""
 ---
 
 Output the report content directly, no extra commentary.
+"""
+
+        elif review_language == "pt":
+            report_title = self._get_review_title(overview.date).removeprefix("## ").strip()
+            return f"""Você é um analista profissional dos mercados EUA/Ações A/HK. Por favor, produza um relatório conciso de revisão do mercado com base nos dados abaixo.
+
+[Requisitos]
+- Saída APENAS em Markdown puro
+- Sem JSON
+- Sem blocos de código
+- Use emoji com moderação nos títulos (no máximo um por título)
+- Toda a estrutura fixa, cabeçalhos, orientação e conclusão DEVEM estar em Português (pt-BR)
+
+---
+
+# Dados de Mercado de Hoje
+
+## Data
+{overview.date}
+
+## Índices Principais
+{indices_placeholder}
+
+{stats_block}
+
+{sector_block}
+
+## Notícias do Mercado
+{news_placeholder}
+
+{data_no_indices_hint}
+
+{self._get_strategy_prompt_block()}
+
+---
+
+# Modelo de Saída (siga esta estrutura)
+
+## {report_title}
+
+### 1. Resumo do Mercado
+(2-3 frases resumindo o tom geral do mercado, movimentos do índice e liquidez.)
+
+### 2. Análise dos Índices
+({self._get_index_hint()})
+
+### 3. Fluxo de Fundos
+(Interprete o que o volume, a participação e os sinais de fluxo de dinheiro indicam.)
+
+### 4. Setores em Destaque
+(Analise os motivos por trás dos setores ou temas que estão liderando e dos que estão atrasados.)
+
+### 5. Catálisadores e Notícias
+(Combine as notícias mais relevantes para destacar os catalisadores importantes.)
+
+### 6. Plano de Ação
+(Forneça uma posição ofensiva/equilibrada/defensiva, foco principal, áreas a evitar e condição de invalidação.)
+
+### 7. Alertas de Risco
+(Liste os principais riscos a serem monitorados; conclua com "Apenas para referência, não é um conselho de investimento".)
+
+---
+
+Produza o conteúdo do relatório diretamente, sem comentários extras.
 """
 
         # A 股场景使用中文提示语
@@ -1197,14 +1315,51 @@ Market conditions can change quickly. The data above is for reference only and d
 """
             return report
 
-        market_labels = {"cn": "A股", "us": "美股", "hk": "港股"}
-        market_label = market_labels.get(self.region, "A股")
+        lang = self._get_review_language()
+        market_labels = {"cn": "A shares", "us": "US", "hk": "HK"} if lang != "zh" else {"cn": "A股", "us": "美股", "hk": "港股"}
+        market_label = market_labels.get(self.region, "A shares" if lang != "zh" else "A股")
         dashboard_block = self._build_stats_block(overview)
         indices_block = self._build_indices_block(overview)
-        sector_block = self._build_sector_block(overview)
+        sector_block_content = self._build_sector_block(overview)
+        if lang != "zh":
+            market_names_pt = {"us": "Revisão do Mercado Americano", "hk": "Revisão do Mercado de HK"}
+            market_name_pt = market_names_pt.get(self.region, "Revisão do Mercado")
+            return f"""## {overview.date} {market_name_pt}
+
+> O mercado de {self._get_market_scope_name(lang)} hoje apresentou **{market_mood}**. Priorize observar a sustentação dos índices, volume e persistência dos setores.
+
+### 1. Resumo do Mercado
+{dashboard_block or "Sem dados de amplitude de mercado disponíveis."}
+
+### 2. Análise dos Índices
+{indices_block or indices_text or "Sem dados de índices."}
+
+### 3. Setores em Destaque
+{sector_block_content or "- Sem dados de setores disponíveis."}
+
+### 4. Fluxo de Capital e Sentimento
+- Com base no volume e na amplitude, o cenário atual favorece aguardar confirmação antes de novas entradas.
+
+### 5. Catálisadores de Notícias
+- Quando não há notícias disponíveis, reduza a certeza sobre a persistência dos temas.
+
+### 6. Plano Estratégico
+- **Conclusão**: Observação equilibrada.
+- **Posição**: Manter em nível neutro, aguardar alinhamento entre índice e setor líder.
+- **Focar em**: {top_text or "Setores com desempenho superior ao índice"}.
+- **Evitar**: {bottom_text or "Setores em queda persistente sem sinais de recuperação"}.
+
+### 7. Alertas de Risco
+- O mercado envolve riscos; o investimento requer cautela. Os dados acima são apenas para referência e não constituem conselho de investimento.
+
+---
+*Horário da Revisão: {datetime.now().strftime('%H:%M')}*
+"""
+        market_labels_zh = {"cn": "A股", "us": "美股", "hk": "港股"}
+        market_label_zh = market_labels_zh.get(self.region, "A股")
         return f"""## {overview.date} 大盘复盘
 
-> 今日{market_label}市场整体呈现**{market_mood}**态势，优先观察指数承接、成交额变化和板块持续性。
+> 今日{market_label_zh}市场整体呈现**{market_mood}**态势，优先观察指数承接、成交额变化和板块持续性。
 
 ### 一、盘面总览
 {dashboard_block or "暂无市场宽度数据。"}
@@ -1213,7 +1368,7 @@ Market conditions can change quickly. The data above is for reference only and d
 {indices_block or indices_text or "暂无指数数据。"}
 
 ### 三、板块主线
-{sector_block or "- 暂无板块涨跌榜数据。"}
+{sector_block_content or "- 暂无板块涨跌榜数据。"}
 
 ### 四、资金与情绪
 - 结合成交额和涨跌家数看，当前更适合等待确认，避免仅凭单一热点追高。

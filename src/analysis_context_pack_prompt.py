@@ -25,6 +25,15 @@ BLOCK_LABELS_EN = {
     "news": "news",
 }
 
+BLOCK_LABELS_PT = {
+    "quote": "Cotação",
+    "daily_bars": "Diário",
+    "technical": "Técnico",
+    "chip": "Posições",
+    "fundamentals": "Fundamentos",
+    "news": "Notícias",
+}
+
 STATUS_LABELS_ZH = {
     "available": "可用",
     "missing": "缺失",
@@ -47,6 +56,17 @@ STATUS_LABELS_EN = {
     "fetch_failed": "fetch failed",
 }
 
+STATUS_LABELS_PT = {
+    "available": "Disponível",
+    "missing": "Ausente",
+    "not_supported": "Não Suportado",
+    "fallback": "Fallback",
+    "stale": "Desatualizado",
+    "estimated": "Estimado",
+    "partial": "Parcial",
+    "fetch_failed": "Falha na Busca",
+}
+
 QUALITY_LEVEL_LABELS_ZH = {
     "good": "良好",
     "usable": "可用",
@@ -59,6 +79,13 @@ QUALITY_LEVEL_LABELS_EN = {
     "usable": "usable",
     "limited": "limited",
     "poor": "poor",
+}
+
+QUALITY_LEVEL_LABELS_PT = {
+    "good": "Bom",
+    "usable": "Utilizável",
+    "limited": "Limitado",
+    "poor": "Ruim",
 }
 
 CORE_DEGRADED_STATUSES = {
@@ -101,15 +128,21 @@ SENSITIVE_MARKERS = (
 
 
 def normalize_analysis_context_pack_language(report_language: str = "zh") -> str:
-    return "en" if str(report_language or "").lower() == "en" else "zh"
+    lang = str(report_language or "").lower()
+    if lang == "en":
+        return "en"
+    if lang == "pt" or lang.startswith("pt"):
+        return "pt"
+    return "zh"
 
 
 def get_analysis_context_pack_block_labels(report_language: str = "zh") -> Dict[str, str]:
-    return (
-        BLOCK_LABELS_EN
-        if normalize_analysis_context_pack_language(report_language) == "en"
-        else BLOCK_LABELS_ZH
-    )
+    lang = normalize_analysis_context_pack_language(report_language)
+    if lang == "en":
+        return BLOCK_LABELS_EN
+    if lang == "pt":
+        return BLOCK_LABELS_PT
+    return BLOCK_LABELS_ZH
 
 
 def iter_analysis_context_pack_block_keys(blocks: Mapping[str, Any]) -> List[str]:
@@ -350,7 +383,12 @@ def _data_limitation_lines(payload: Dict[str, Any], *, lang: str) -> List[str]:
 
 def _localized_limitations(limitations: List[str], *, lang: str) -> List[str]:
     labels = get_analysis_context_pack_block_labels(lang)
-    status_labels = STATUS_LABELS_EN if lang == "en" else STATUS_LABELS_ZH
+    if lang == "en":
+        status_labels = STATUS_LABELS_EN
+    elif lang == "pt":
+        status_labels = STATUS_LABELS_PT
+    else:
+        status_labels = STATUS_LABELS_ZH
     result: List[str] = []
     for item in limitations:
         key, separator, status = item.partition(":")
@@ -364,7 +402,7 @@ def _localized_limitations(limitations: List[str], *, lang: str) -> List[str]:
         if not label or not status_label:
             continue
         result.append(
-            f"{label}: {status_label}" if lang == "en" else f"{label}：{status_label}"
+            f"{label}: {status_label}" if lang in ("en", "pt") else f"{label}：{status_label}"
         )
     return result[:5]
 
@@ -437,7 +475,12 @@ def _phase_value(payload: Dict[str, Any]) -> str:
 
 
 def _quality_level_label(level: str, *, lang: str) -> str:
-    labels = QUALITY_LEVEL_LABELS_EN if lang == "en" else QUALITY_LEVEL_LABELS_ZH
+    if lang == "en":
+        labels = QUALITY_LEVEL_LABELS_EN
+    elif lang == "pt":
+        labels = QUALITY_LEVEL_LABELS_PT
+    else:
+        labels = QUALITY_LEVEL_LABELS_ZH
     return labels.get(level, "")
 
 
@@ -515,5 +558,5 @@ def _safe_text(value: Any) -> str:
 
 
 def _join_text(values: Iterable[str], *, lang: str) -> str:
-    separator = ", " if lang == "en" else "、"
+    separator = ", " if lang in ("en", "pt") else "、"
     return separator.join(values)

@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTheme } from 'next-themes';
 import { getSentimentLabel, type ReportLanguage } from '../../types/analysis';
 import { cn } from '../../utils/cn';
-import { normalizeReportLanguage, getReportText } from '../../utils/reportLanguage';
+import { normalizeReportLanguage } from '../../utils/reportLanguage';
 
 interface ScoreGaugeProps {
   score: number;
@@ -77,7 +77,6 @@ export const ScoreGauge: React.FC<ScoreGaugeProps> = ({
   }, [score]);
 
   const reportLanguage = normalizeReportLanguage(language);
-  const text = getReportText(reportLanguage);
   const label = getSentimentLabel(score, reportLanguage);
 
   // Size configuration for each gauge variant.
@@ -146,17 +145,12 @@ export const ScoreGauge: React.FC<ScoreGaugeProps> = ({
 
   return (
     <div className={cn('flex flex-col items-center', className)}>
-      {showLabel && (
-        <span className="label-uppercase mb-3 text-secondary-text">
-          {text.fearGreedIndex}
-        </span>
-      )}
 
-      <div className="relative" style={{ width, height: width }}>
+
+      <div className="relative w-full max-w-full flex items-center justify-center aspect-square" style={{ maxWidth: width }}>
         <svg
-          className="gauge-ring overflow-visible"
-          width={width}
-          height={width}
+          className="gauge-ring overflow-visible w-full h-full"
+          viewBox={`0 0 ${width} ${width}`}
           style={gaugeTheme.svgFilter ? { filter: gaugeTheme.svgFilter } : {}}
         >
           <defs>

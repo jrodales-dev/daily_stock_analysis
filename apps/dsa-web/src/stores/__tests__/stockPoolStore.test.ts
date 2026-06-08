@@ -409,7 +409,6 @@ describe('stockPoolStore', () => {
       stockName: '腾讯控股',
       originalQuery: '00700',
       selectionSource: 'autocomplete',
-      notify: true,
     }));
   });
 

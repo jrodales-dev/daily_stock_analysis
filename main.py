@@ -1,30 +1,37 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-A股自选股智能分析系统 - 主调度程序
+A-Share Smart Stock Analysis System - Main Scheduler
 ===================================
 
-职责：
-1. 协调各模块完成股票分析流程
-2. 实现低并发的线程池调度
-3. 全局异常处理，确保单股失败不影响整体
-4. 提供命令行入口
+Responsibilities:
+1. Coordinate modules to complete the stock analysis workflow
+2. Implement low-concurrency thread pool scheduling
+3. Global exception handling to ensure single stock failure doesn't affect the whole
+4. Provide a command-line entry point
 
-使用方式：
-    python main.py              # 正常运行
-    python main.py --debug      # 调试模式
-    python main.py --dry-run    # 仅获取数据不分析
+Usage:
+    python main.py              # Normal execution
+    python main.py --debug      # Debug mode
+    python main.py --dry-run    # Fetch data only, no analysis
 
-交易理念（已融入分析）：
-- 严进策略：不追高，乖离率 > 5% 不买入
-- 趋势交易：只做 MA5>MA10>MA20 多头排列
-- 效率优先：关注筹码集中度好的股票
-- 买点偏好：缩量回踩 MA5/MA10 支撑
+Trading philosophy (integrated into analysis):
+- Strict entry: Do not chase highs, do not buy if bias > 5%
+- Trend trading: Only trade long setups MA5 > MA10 > MA20
+- Efficiency first: Focus on stocks with good chip concentration
+- Buying preference: Shrinking volume pulling back to MA5/MA10 support
 """
 from __future__ import annotations
 
 import multiprocessing
+import sys
 import os
+
+if sys.platform == "win32":
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -34,10 +41,10 @@ from src.config import setup_env
 _INITIAL_PROCESS_ENV = dict(os.environ)
 setup_env()
 
-# 代理配置 - 通过 USE_PROXY 环境变量控制，默认关闭
-# GitHub Actions 环境自动跳过代理配置
+# Configuração de proxy - controlada pela variável de ambiente USE_PROXY, desativada por padrão
+# O ambiente do GitHub Actions pula automaticamente a configuração de proxy
 if os.getenv("GITHUB_ACTIONS") != "true" and os.getenv("USE_PROXY", "false").lower() == "true":
-    # 本地开发环境，启用代理（可在 .env 中配置 PROXY_HOST 和 PROXY_PORT）
+    # Ambiente de desenvolvimento local, habilita proxy (pode ser configurado no .env com PROXY_HOST e PROXY_PORT)
     proxy_host = os.getenv("PROXY_HOST", "127.0.0.1")
     proxy_port = os.getenv("PROXY_PORT", "10809")
     proxy_url = f"http://{proxy_host}:{proxy_port}"
@@ -76,11 +83,11 @@ def _read_active_env_values() -> Optional[Dict[str, str]]:
     try:
         values = dotenv_values(env_path)
     except Exception as exc:  # pragma: no cover - defensive branch
-        logger.warning("读取配置文件 %s 失败，继续沿用当前环境变量: %s", env_path, exc)
+        logger.warning("Falha ao ler o arquivo de configuração %s, continuando com as variáveis de ambiente atuais: %s", env_path, exc)
         return None
 
     return {
-        str(key): "" if value is None else str(value)
+        key: "" if value is None else value
         for key, value in values.items()
         if key is not None
     }
@@ -149,9 +156,7 @@ def _setup_runtime_logging(log_dir: str, debug: bool = False) -> bool:
         return True
     except OSError as exc:
         logger.warning(
-            "文件日志初始化失败，已降级为控制台日志输出；日志目录 %r 当前不可写或不可创建: %s。"
-            "官方 Docker 镜像启动入口会自动修复默认挂载目录权限；若仍失败，"
-            "请检查是否使用了 --user、只读挂载、rootless Docker 或 NFS 等限制写入的环境。",
+            "Falha na inicialização do log em arquivo, rebaixado para saída de log no console; o diretório de log %r não pode ser gravado ou criado no momento: %s. O ponto de entrada do contêiner Docker oficial corrigirá automaticamente as permissões do diretório de montagem padrão; se ainda falhar, verifique se há restrições de gravação no ambiente, como o uso de --user, montagem somente leitura, Docker rootless ou NFS.",
             log_dir,
             exc,
         )
@@ -220,166 +225,166 @@ def _reload_env_file_values_preserving_overrides() -> None:
 
 
 def parse_arguments() -> argparse.Namespace:
-    """解析命令行参数"""
+    """Parse command line arguments"""
     parser = argparse.ArgumentParser(
-        description='A股自选股智能分析系统',
+        description='Smart Stock Analysis System',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog='''
-示例:
-  python main.py                    # 正常运行
-  python main.py --debug            # 调试模式
-  python main.py --dry-run          # 仅获取数据，不进行 AI 分析
-  python main.py --stocks 600519,000001  # 指定分析特定股票
-  python main.py --no-notify        # 不发送推送通知
-  python main.py --check-notify     # 检查通知配置，不发送通知
-  python main.py --single-notify    # 启用单股推送模式（每分析完一只立即推送）
-  python main.py --schedule         # 启用定时任务模式
-  python main.py --market-review    # 仅运行大盘复盘
+Examples:
+  python main.py                    # Normal execution
+  python main.py --debug            # Debug mode
+  python main.py --dry-run          # Fetch data only, no AI analysis
+  python main.py --stocks 600519,000001  # Specify stocks to analyze
+  python main.py --no-notify        # Do not send push notifications
+  python main.py --check-notify     # Check notification config only
+  python main.py --single-notify    # Single-stock push mode (push immediately after each analysis)
+  python main.py --schedule         # Scheduled task mode
+  python main.py --market-review    # Run market review only
         '''
     )
 
     parser.add_argument(
         '--debug',
         action='store_true',
-        help='启用调试模式，输出详细日志'
+        help='Enable debug mode with detailed logs'
     )
 
     parser.add_argument(
         '--dry-run',
         action='store_true',
-        help='仅获取数据，不进行 AI 分析'
+        help='Fetch data only, no AI analysis'
     )
 
     parser.add_argument(
         '--stocks',
         type=str,
-        help='指定要分析的股票代码，逗号分隔（覆盖配置文件）'
+        help='Specify stocks to analyze, comma-separated (overrides config file)'
     )
 
     parser.add_argument(
         '--no-notify',
         action='store_true',
-        help='不发送推送通知'
+        help='Do not send push notifications'
     )
 
     parser.add_argument(
         '--check-notify',
         action='store_true',
-        help='只读检查通知渠道配置，不发送通知'
+        help='Read-only check notification channel config, do not send notifications'
     )
 
     parser.add_argument(
         '--single-notify',
         action='store_true',
-        help='启用单股推送模式：每分析完一只股票立即推送，而不是汇总推送'
+        help='Enable single-stock push mode: push immediately after each analysis instead of aggregating'
     )
 
     parser.add_argument(
         '--workers',
         type=int,
         default=None,
-        help='并发线程数（默认使用配置值）'
+        help='Number of concurrent threads (defaults to config value)'
     )
 
     parser.add_argument(
         '--schedule',
         action='store_true',
-        help='启用定时任务模式，每日定时执行'
+        help='Enable scheduled task mode, execute daily at set time'
     )
 
     parser.add_argument(
         '--no-run-immediately',
         action='store_true',
-        help='定时任务启动时不立即执行一次'
+        help='Do not execute immediately upon starting scheduled task'
     )
 
     parser.add_argument(
         '--market-review',
         action='store_true',
-        help='仅运行大盘复盘分析'
+        help='Run market review analysis only'
     )
 
     parser.add_argument(
         '--no-market-review',
         action='store_true',
-        help='跳过大盘复盘分析'
+        help='Skip market review analysis'
     )
 
     parser.add_argument(
         '--force-run',
         action='store_true',
-        help='跳过交易日检查，强制执行全量分析（Issue #373）'
+        help='Skip trading day check, force full analysis execution'
     )
 
     parser.add_argument(
         '--webui',
         action='store_true',
-        help='启动 Web 管理界面'
+        help='Start Web management interface'
     )
 
     parser.add_argument(
         '--webui-only',
         action='store_true',
-        help='仅启动 Web 服务，不执行自动分析'
+        help='Start Web service only, do not run automatic analysis'
     )
 
     parser.add_argument(
         '--serve',
         action='store_true',
-        help='启动 FastAPI 后端服务（同时执行分析任务）'
+        help='Start FastAPI backend service (and execute analysis tasks)'
     )
 
     parser.add_argument(
         '--serve-only',
         action='store_true',
-        help='仅启动 FastAPI 后端服务，不自动执行分析'
+        help='Start FastAPI backend service only, do not run automatic analysis'
     )
 
     parser.add_argument(
         '--port',
         type=int,
         default=8000,
-        help='FastAPI 服务端口（默认 8000）'
+        help='FastAPI service port (default 8000)'
     )
 
     parser.add_argument(
         '--host',
         type=str,
         default='0.0.0.0',
-        help='FastAPI 服务监听地址（默认 0.0.0.0）'
+        help='FastAPI service listening address (default 0.0.0.0)'
     )
 
     parser.add_argument(
         '--no-context-snapshot',
         action='store_true',
-        help='不保存分析上下文快照'
+        help='Do not save analysis context snapshot'
     )
 
     # === Backtest ===
     parser.add_argument(
         '--backtest',
         action='store_true',
-        help='运行回测（对历史分析结果进行评估）'
+        help='Run backtest (evaluate historical analysis results)'
     )
 
     parser.add_argument(
         '--backtest-code',
         type=str,
         default=None,
-        help='仅回测指定股票代码'
+        help='Backtest only specified stock code'
     )
 
     parser.add_argument(
         '--backtest-days',
         type=int,
         default=None,
-        help='回测评估窗口（交易日数，默认使用配置）'
+        help='Backtest evaluation window (trading days, defaults to config)'
     )
 
     parser.add_argument(
         '--backtest-force',
         action='store_true',
-        help='强制回测（即使已有回测结果也重新计算）'
+        help='Force backtest (recalculate even if results exist)'
     )
 
     return parser.parse_args()
@@ -439,7 +444,7 @@ def _run_market_review_with_shared_lock(
 
     lock_token = try_acquire_market_review_lock(config)
     if lock_token is None:
-        logger.warning("大盘复盘正在执行中，跳过本次大盘复盘")
+        logger.warning("A análise de fechamento de mercado já está em execução, pulando esta execução")
         return None
 
     try:
@@ -458,11 +463,11 @@ def _refresh_stock_index_cache_for_analysis(config: Config) -> None:
 
         result = refresh_remote_stock_index_cache(settings_from_config(config))
         if result.refreshed:
-            logger.info("[stock-index] 分析前已刷新股票索引缓存: %s", result.cache_path)
+            logger.info("[stock-index] Cache de índice de ações atualizado antes da análise: %s", result.cache_path)
         elif result.error:
-            logger.debug("[stock-index] 分析前刷新未完成，继续使用本地索引: %s", result.error)
+            logger.debug("[stock-index] A atualização antes da análise não foi concluída, continuando com o índice local: %s", result.error)
     except Exception as exc:  # noqa: BLE001 - stock index freshness must not block analysis.
-        logger.warning("[stock-index] 分析前刷新股票索引失败，继续执行分析: %s", exc)
+        logger.warning("[stock-index] Falha ao atualizar o índice de ações antes da análise, continuando com a execução da análise: %s", exc)
 
 
 def run_full_analysis(
@@ -471,9 +476,9 @@ def run_full_analysis(
     stock_codes: Optional[List[str]] = None
 ):
     """
-    执行完整的分析流程（个股 + 大盘复盘）
+    Executa o fluxo completo de análise (ações individuais + fechamento de mercado)
 
-    这是定时任务调用的主函数
+    Esta é a função principal chamada pela tarefa agendada
     """
     # Import pipeline modules outside the broad try/except so that import-time
     # failures propagate to the caller instead of being silently swallowed.
@@ -494,19 +499,22 @@ def run_full_analysis(
         )
         if should_skip:
             logger.info(
-                "今日所有相关市场均为非交易日，跳过执行。可使用 --force-run 强制执行。"
+                "Hoje não é um dia de negociação em nenhum dos mercados relevantes, pulando a execução. Use --force-run para forçar a execução."
             )
             return
         if set(filtered_codes) != set(effective_codes):
             skipped = set(effective_codes) - set(filtered_codes)
-            logger.info("今日休市股票已跳过: %s", skipped)
+            logger.info("Ações com mercado fechado hoje foram puladas: %s", skipped)
         stock_codes = filtered_codes
 
-        # 命令行参数 --single-notify 覆盖配置（#55）
+        # O argumento de linha de comando --single-notify substitui a configuração (#55)
         if getattr(args, 'single_notify', False):
             config.single_stock_notify = True
 
-        # Issue #190: 个股与大盘复盘合并推送
+        # Ensure pipeline.py respects the CLI force_run flag for the economical fast path
+        config.force_run = getattr(args, 'force_run', False)
+
+        # Issue #190: Envio consolidado de análise de ações individuais e fechamento de mercado
         merge_notification = (
             getattr(config, 'merge_email_notification', False)
             and config.market_review_enabled
@@ -514,7 +522,7 @@ def run_full_analysis(
             and not config.single_stock_notify
         )
 
-        # 创建调度器
+        # Criar agendador
         save_context_snapshot = None
         if getattr(args, 'no_context_snapshot', False):
             save_context_snapshot = False
@@ -527,7 +535,7 @@ def run_full_analysis(
             save_context_snapshot=save_context_snapshot
         )
 
-        # 1. 运行个股分析
+        # 1. Executar análise de ações individuais
         results = pipeline.run(
             stock_codes=stock_codes,
             dry_run=args.dry_run,
@@ -535,7 +543,7 @@ def run_full_analysis(
             merge_notification=merge_notification
         )
 
-        # Issue #128: 分析间隔 - 在个股分析和大盘分析之间添加延迟
+        # Issue #128: Intervalo de análise - adiciona um atraso entre a análise de ações individuais e a análise de mercado
         analysis_delay = getattr(config, 'analysis_delay', 0)
         if (
             analysis_delay > 0
@@ -543,10 +551,10 @@ def run_full_analysis(
             and not args.no_market_review
             and effective_region != ''
         ):
-            logger.info(f"等待 {analysis_delay} 秒后执行大盘复盘（避免API限流）...")
+            logger.info(f"Aguardando {analysis_delay} segundos antes de executar o fechamento de mercado (para evitar limite de taxa da API)...")
             time.sleep(analysis_delay)
 
-        # 2. 运行大盘复盘（如果启用且不是仅个股模式）
+        # 2. Executar fechamento de mercado (se ativado e não for o modo apenas ações individuais)
         market_report = ""
         if (
             config.market_review_enabled
@@ -563,89 +571,89 @@ def run_full_analysis(
                 merge_notification=merge_notification,
                 override_region=effective_region,
             )
-            # 如果有结果，赋值给 market_report 用于后续飞书文档生成
+            # Se houver resultados, atribui ao market_report para posterior geração de documentos do Feishu
             if review_result:
                 market_report = review_result
 
-        # Issue #190: 合并推送（个股+大盘复盘）
+        # Issue #190: Envio consolidado (ações individuais + fechamento de mercado)
         if merge_notification and (results or market_report) and not args.no_notify:
             parts = []
             if market_report:
-                parts.append(f"# 📈 大盘复盘\n\n{market_report}")
+                parts.append(f"# 📈 Fechamento de Mercado\n\n{market_report}")
             if results:
                 dashboard_content = pipeline.notifier.generate_aggregate_report(
                     results,
                     getattr(config, 'report_type', 'simple'),
                 )
-                parts.append(f"# 🚀 个股决策仪表盘\n\n{dashboard_content}")
+                parts.append(f"# 🚀 Painel de Decisão de Ações Individuais\n\n{dashboard_content}")
             if parts:
                 combined_content = "\n\n---\n\n".join(parts)
                 if pipeline.notifier.is_available():
                     if pipeline.notifier.send(combined_content, email_send_to_all=True, route_type="report"):
-                        logger.info("已合并推送（个股+大盘复盘）")
+                        logger.info("Envio consolidado realizado (ações individuais + fechamento de mercado)")
                     else:
-                        logger.warning("合并推送失败")
+                        logger.warning("Falha no envio consolidado")
 
-        # 输出摘要
+        # Exibir resumo
         if results:
-            logger.info("\n===== 分析结果摘要 =====")
+            logger.info("\n===== Analysis Summary =====")
             for r in sorted(results, key=lambda x: x.sentiment_score, reverse=True):
                 emoji = r.get_emoji()
                 logger.info(
                     f"{emoji} {r.name}({r.code}): {r.operation_advice} | "
-                    f"评分 {r.sentiment_score} | {r.trend_prediction}"
+                    f"Score {r.sentiment_score} | {r.trend_prediction}"
                 )
 
-        logger.info("\n任务执行完成")
+        logger.info("\nTask execution completed")
 
-        # === 新增：生成飞书云文档 ===
+        # === New: Generate Feishu Cloud Document ===
         try:
             from src.feishu_doc import FeishuDocManager
 
             feishu_doc = FeishuDocManager()
             if feishu_doc.is_configured() and (results or market_report):
-                logger.info("正在创建飞书云文档...")
+                logger.info("Creating Feishu Cloud Document...")
 
-                # 1. 准备标题 "01-01 13:01大盘复盘"
+                # 1. Prepare title
                 tz_cn = timezone(timedelta(hours=8))
                 now = datetime.now(tz_cn)
-                doc_title = f"{now.strftime('%Y-%m-%d %H:%M')} 大盘复盘"
+                doc_title = f"{now.strftime('%Y-%m-%d %H:%M')} Market Review"
 
-                # 2. 准备内容 (拼接个股分析和大盘复盘)
+                # 2. Prepare content
                 full_content = ""
 
-                # 添加大盘复盘内容（如果有）
+                # Add market review content (if any)
                 if market_report:
-                    full_content += f"# 📈 大盘复盘\n\n{market_report}\n\n---\n\n"
+                    full_content += f"# 📈 Market Review\n\n{market_report}\n\n---\n\n"
 
-                # 添加个股决策仪表盘（使用 NotificationService 生成，按 report_type 分支）
+                # Add stock decision dashboard
                 if results:
                     dashboard_content = pipeline.notifier.generate_aggregate_report(
                         results,
                         getattr(config, 'report_type', 'simple'),
                     )
-                    full_content += f"# 🚀 个股决策仪表盘\n\n{dashboard_content}"
+                    full_content += f"# 🚀 Decision Dashboard\n\n{dashboard_content}"
 
-                # 3. 创建文档
+                # 3. Create document
                 doc_url = feishu_doc.create_daily_doc(doc_title, full_content)
                 if doc_url:
-                    logger.info(f"飞书云文档创建成功: {doc_url}")
-                    # 可选：将文档链接也推送到群里
+                    logger.info(f"Feishu Cloud Document created successfully: {doc_url}")
+                    # Optional: push document link to group
                     if not args.no_notify:
                         pipeline.notifier.send(
-                            f"[{now.strftime('%Y-%m-%d %H:%M')}] 复盘文档创建成功: {doc_url}",
+                            f"[{now.strftime('%Y-%m-%d %H:%M')}] Review document created successfully: {doc_url}",
                             route_type="report",
                         )
 
         except Exception as e:
-            logger.error(f"飞书文档生成失败: {e}")
+            logger.error(f"Failed to generate Feishu document: {e}")
 
         # === Auto backtest ===
         try:
             if getattr(config, 'backtest_enabled', False):
                 from src.services.backtest_service import BacktestService
 
-                logger.info("开始自动回测...")
+                logger.info("Starting automatic backtest...")
                 service = BacktestService()
                 stats = service.run_backtest(
                     force=False,
@@ -654,24 +662,24 @@ def run_full_analysis(
                     limit=200,
                 )
                 logger.info(
-                    f"自动回测完成: processed={stats.get('processed')} saved={stats.get('saved')} "
+                    f"Auto backtest completed: processed={stats.get('processed')} saved={stats.get('saved')} "
                     f"completed={stats.get('completed')} insufficient={stats.get('insufficient')} errors={stats.get('errors')}"
                 )
         except Exception as e:
-            logger.warning(f"自动回测失败（已忽略）: {e}")
+            logger.warning(f"Auto backtest failed (ignored): {e}")
 
     except Exception as e:
-        logger.exception(f"分析流程执行失败: {e}")
+        logger.exception(f"Analysis pipeline execution failed: {e}")
 
 
 def start_api_server(host: str, port: int, config: Config) -> None:
     """
-    在后台线程启动 FastAPI 服务
+    Inicia o serviço FastAPI em uma thread de segundo plano
 
     Args:
-        host: 监听地址
-        port: 监听端口
-        config: 配置对象
+        host: Endereço de escuta
+        port: Porta de escuta
+        config: Objeto de configuração
     """
     import threading
     import uvicorn
@@ -688,7 +696,7 @@ def start_api_server(host: str, port: int, config: Config) -> None:
 
     thread = threading.Thread(target=run_server, daemon=True)
     thread.start()
-    logger.info(f"FastAPI 服务已启动: http://{host}:{port}")
+    logger.info(f"Serviço FastAPI iniciado: http://{host}:{port}")
 
 
 def _is_truthy_env(var_name: str, default: str = "true") -> bool:
@@ -699,7 +707,7 @@ def _is_truthy_env(var_name: str, default: str = "true") -> bool:
 
 def start_bot_stream_clients(config: Config) -> None:
     """Start bot stream clients when enabled in config."""
-    # 启动钉钉 Stream 客户端
+    # Iniciar cliente DingTalk Stream
     if config.dingtalk_stream_enabled:
         try:
             from bot.platforms import start_dingtalk_stream_background, DINGTALK_STREAM_AVAILABLE
@@ -714,7 +722,7 @@ def start_bot_stream_clients(config: Config) -> None:
         except Exception as exc:
             logger.error(f"[Main] Failed to start Dingtalk Stream client: {exc}")
 
-    # 启动飞书 Stream 客户端
+    # Iniciar cliente Feishu Stream
     if getattr(config, 'feishu_stream_enabled', False):
         try:
             from bot.platforms import start_feishu_stream_background, FEISHU_SDK_AVAILABLE
@@ -734,7 +742,7 @@ def _resolve_scheduled_stock_codes(stock_codes: Optional[List[str]]) -> Optional
     """Scheduled runs should always read the latest persisted watchlist."""
     if stock_codes is not None:
         logger.warning(
-            "定时模式下检测到 --stocks 参数；计划执行将忽略启动时股票快照，并在每次运行前重新读取最新的 STOCK_LIST。"
+            "Parâmetro --stocks detectado no modo agendado; a execução planejada ignorará o snapshot de ações na inicialização e relerá a STOCK_LIST mais recente antes de cada execução."
         )
     return None
 
@@ -775,15 +783,15 @@ def _build_schedule_time_provider(default_schedule_time: str):
 
 def main() -> int:
     """
-    主入口函数
+    Função de entrada principal
 
-    Returns:
-        退出码（0 表示成功）
+    Retorna:
+        Código de saída (0 significa sucesso)
     """
-    # 解析命令行参数
+    # Analisar argumentos de linha de comando
     args = parse_arguments()
 
-    # 在配置加载前先初始化 bootstrap 日志，确保早期失败也能落盘
+    # Inicializar o log de bootstrap antes do carregamento da configuração para garantir que falhas iniciais sejam registradas
     try:
         _setup_bootstrap_logging(debug=args.debug)
     except Exception as exc:
@@ -792,28 +800,28 @@ def main() -> int:
             format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
             stream=sys.stderr,
         )
-        logger.warning("Bootstrap 日志初始化失败，已回退到 stderr: %s", exc)
+        logger.warning("Falha na inicialização do log de Bootstrap, revertido para stderr: %s", exc)
 
-    # 加载配置（在 bootstrap logging 之后执行，确保异常有日志）
+    # Carregar configuração (executado após o bootstrap logging para garantir que as exceções sejam registradas)
     try:
         config = get_config()
     except Exception as exc:
-        logger.exception("加载配置失败: %s", exc)
+        logger.exception("Falha ao carregar a configuração: %s", exc)
         return 1
 
-    # 配置日志（输出到控制台和文件）
+    # Configurar logs (saída para o console e arquivo)
     try:
         _setup_runtime_logging(config.log_dir, debug=args.debug)
     except Exception as exc:
-        logger.exception("切换到配置日志目录失败: %s", exc)
+        logger.exception("Falha ao alternar para o diretório de logs configurado: %s", exc)
         return 1
 
     logger.info("=" * 60)
-    logger.info("A股自选股智能分析系统 启动")
-    logger.info(f"运行时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info("Sistema Inteligente de Análise de Ações Classe A Iniciado")
+    logger.info(f"Tempo de execução: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info("=" * 60)
 
-    # 验证配置
+    # Validar configuração
     warnings = config.validate()
     for warning in warnings:
         logger.warning(warning)
@@ -828,63 +836,66 @@ def main() -> int:
         print(format_notification_diagnostics(result))
         return 0 if result.ok else 1
 
-    # 解析股票列表（统一为大写 Issue #355）
+    # Analisar lista de ações (padronizar para maiúsculas Issue #355)
     stock_codes = None
     if args.stocks:
         stock_codes = [canonical_stock_code(c) for c in args.stocks.split(',') if (c or "").strip()]
-        logger.info(f"使用命令行指定的股票列表: {stock_codes}")
+        logger.info(f"Usando a lista de ações especificada pela linha de comando: {stock_codes}")
 
-    # === 处理 --webui / --webui-only 参数，映射到 --serve / --serve-only ===
+    # === Processar parâmetros --webui / --webui-only, mapeando para --serve / --serve-only ===
     if args.webui:
         args.serve = True
     if args.webui_only:
         args.serve_only = True
 
-    # 兼容旧版 WEBUI_ENABLED 环境变量
+    # Compatibilidade com a variável de ambiente antiga WEBUI_ENABLED
     if config.webui_enabled and not (args.serve or args.serve_only):
         args.serve = True
 
-    # === 启动 Web 服务 (如果启用) ===
+    # === Iniciar serviço Web (se ativado) ===
     start_serve = (args.serve or args.serve_only) and os.getenv("GITHUB_ACTIONS") != "true"
 
-    # 兼容旧版 WEBUI_HOST/WEBUI_PORT：如果用户未通过 --host/--port 指定，则使用旧变量
+    # Compatibilidade com WEBUI_HOST/WEBUI_PORT antigos: se o usuário não especificou via --host/--port, usa as variáveis antigas
     if start_serve:
-        if args.host == '0.0.0.0' and os.getenv('WEBUI_HOST'):
-            args.host = os.getenv('WEBUI_HOST')
-        if args.port == 8000 and os.getenv('WEBUI_PORT'):
-            args.port = int(os.getenv('WEBUI_PORT'))
+        webui_host = os.getenv('WEBUI_HOST')
+        if args.host == '0.0.0.0' and webui_host:
+            args.host = webui_host
+            
+        webui_port = os.getenv('WEBUI_PORT')
+        if args.port == 8000 and webui_port:
+            args.port = int(webui_port)
 
     bot_clients_started = False
     if start_serve:
         if not prepare_webui_frontend_assets():
-            logger.warning("前端静态资源未就绪，继续启动 FastAPI 服务（Web 页面可能不可用）")
+            logger.warning("Recursos estáticos do frontend não estão prontos, continuando a iniciar o serviço FastAPI (a página Web pode não estar disponível)")
         try:
             start_api_server(host=args.host, port=args.port, config=config)
             bot_clients_started = True
         except Exception as e:
-            logger.error(f"启动 FastAPI 服务失败: {e}")
+            logger.error(f"Falha ao iniciar o serviço FastAPI: {e}")
 
     if bot_clients_started:
         start_bot_stream_clients(config)
 
-    # === 仅 Web 服务模式：不自动执行分析 ===
+    # === Modo apenas serviço Web: não executa análise automática ===
     if args.serve_only:
-        logger.info("模式: 仅 Web 服务")
-        logger.info(f"Web 服务运行中: http://{args.host}:{args.port}")
-        logger.info("通过 /api/v1/analysis/analyze 接口触发分析")
-        logger.info(f"API 文档: http://{args.host}:{args.port}/docs")
-        logger.info("按 Ctrl+C 退出...")
+        logger.info("Modo: Apenas serviço Web")
+        logger.info(f"Serviço Web em execução: http://{args.host}:{args.port}")
+        logger.info("Dispare a análise através do endpoint /api/v1/analysis/analyze")
+        logger.info(f"Documentação da API: http://{args.host}:{args.port}/docs")
+        logger.info("Pressione Ctrl+C para sair...")
         try:
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
-            logger.info("\n用户中断，程序退出")
+            logger.info("\nInterrompido pelo usuário, encerrando o programa")
         return 0
 
     try:
-        # 模式0: 回测
+        # Modo 0: Backtest
         if getattr(args, 'backtest', False):
-            logger.info("模式: 回测")
+            logger.info("Modo: Backtest")
             from src.services.backtest_service import BacktestService
 
             service = BacktestService()
@@ -894,12 +905,12 @@ def main() -> int:
                 eval_window_days=getattr(args, 'backtest_days', None),
             )
             logger.info(
-                f"回测完成: processed={stats.get('processed')} saved={stats.get('saved')} "
+                f"Backtest concluído: processed={stats.get('processed')} saved={stats.get('saved')} "
                 f"completed={stats.get('completed')} insufficient={stats.get('insufficient')} errors={stats.get('errors')}"
             )
             return 0
 
-        # 模式1: 仅大盘复盘
+        # Modo 1: Apenas fechamento de mercado
         if args.market_review:
             from src.core.market_review import run_market_review
             from src.core.market_review_runtime import build_market_review_runtime
@@ -916,10 +927,10 @@ def main() -> int:
                     getattr(config, 'market_review_region', 'cn') or 'cn', open_markets
                 )
                 if effective_region == '':
-                    logger.info("今日大盘复盘相关市场均为非交易日，跳过执行。可使用 --force-run 强制执行。")
+                    logger.info("Hoje não é um dia de negociação nos mercados relevantes para o fechamento de mercado, pulando a execução. Use --force-run para forçar a execução.")
                     return 0
 
-            logger.info("模式: 仅大盘复盘")
+            logger.info("Modo: Apenas fechamento de mercado")
             notifier, analyzer, search_service = build_market_review_runtime(config)
 
             _run_market_review_with_shared_lock(
@@ -933,10 +944,10 @@ def main() -> int:
             )
             return 0
 
-        # 模式2: 定时任务模式
+        # Modo 2: Modo de tarefa agendada
         if args.schedule or config.schedule_enabled:
-            logger.info("模式: 定时任务")
-            logger.info(f"每日执行时间: {config.schedule_time}")
+            logger.info("Modo: Tarefa agendada")
+            logger.info(f"Horário de execução diária: {config.schedule_time}")
 
             # Determine whether to run immediately:
             # Command line arg --no-run-immediately overrides config if present.
@@ -945,7 +956,7 @@ def main() -> int:
             if getattr(args, 'no_run_immediately', False):
                 should_run_immediately = False
 
-            logger.info(f"启动时立即执行: {should_run_immediately}")
+            logger.info(f"Executar imediatamente na inicialização: {should_run_immediately}")
 
             from src.scheduler import run_with_schedule
             scheduled_stock_codes = _resolve_scheduled_stock_codes(stock_codes)
@@ -966,7 +977,7 @@ def main() -> int:
                     stats = alert_worker.run_once()
                     triggered_count = stats.get("triggered", 0)
                     if triggered_count:
-                        logger.info("[EventMonitor] 本轮触发 %d 条提醒", triggered_count)
+                        logger.info("[EventMonitor] Esta rodada disparou %d alertas", triggered_count)
 
                 background_tasks.append({
                     "task": event_monitor_task,
@@ -984,18 +995,20 @@ def main() -> int:
             )
             return 0
 
-        # 模式3: 正常单次运行
+        # Modo 3: Execução única normal
         if config.run_immediately:
+            if start_serve and not getattr(args, 'force_run', False):
+                logger.info("Executando análise inicial (será ignorada se já houver análise hoje; use --force-run para reanalisar)...")
             run_full_analysis(config, args, stock_codes)
         else:
-            logger.info("配置为不立即运行分析 (RUN_IMMEDIATELY=false)")
+            logger.info("Configurado para não executar a análise imediatamente (RUN_IMMEDIATELY=false)")
 
-        logger.info("\n程序执行完成")
+        logger.info("\nExecução do programa concluída")
 
-        # 如果启用了服务且是非定时任务模式，保持程序运行
+        # Se o serviço estiver ativado e não for o modo de tarefa agendada, mantém o programa em execução
         keep_running = start_serve and not (args.schedule or config.schedule_enabled)
         if keep_running:
-            logger.info("API 服务运行中 (按 Ctrl+C 退出)...")
+            logger.info("Serviço API em execução (Pressione Ctrl+C para sair)...")
             try:
                 while True:
                     time.sleep(1)
@@ -1005,11 +1018,11 @@ def main() -> int:
         return 0
 
     except KeyboardInterrupt:
-        logger.info("\n用户中断，程序退出")
+        logger.info("\nInterrompido pelo usuário, encerrando o programa")
         return 130
 
     except Exception as e:
-        logger.exception(f"程序执行失败: {e}")
+        logger.exception(f"Falha na execução do programa: {e}")
         return 1
 
 

@@ -2112,6 +2112,38 @@ class StockAnalysisPipeline:
             )
         try:
             self._emit_progress(12, f"{code}：正在准备分析任务")
+            
+            # --- Fast Path Optimization: Skip if already analyzed today ---
+            from src.services.history_service import HistoryService
+            history_service = HistoryService(self.db)
+            history_resp = history_service.get_history_list(
+                stock_code=code,
+                start_date=str(frozen_td),
+                end_date=str(frozen_td),
+                limit=1
+            )
+            if history_resp.get('total', 0) > 0:
+                logger.info(f"[{code}] 本日分析记录已存在，跳过冗余数据提取和 AI 分析以节省额度。")
+                
+                # Fetch the existing analysis result to return
+                record = history_resp['items'][0]
+                from src.analyzer import AnalysisResult
+                
+                # Reconstruct a minimal AnalysisResult from the existing record
+                result = AnalysisResult(
+                    code=code,
+                    name=record.get('name', ''),
+                    sentiment_score=record.get('sentiment_score', 50),
+                    trend_prediction=record.get('trend_prediction', ''),
+                    operation_advice=record.get('operation_advice', ''),
+                    confidence_level=record.get('confidence_level', ''),
+                    report_language=getattr(self.config, 'report_language', 'zh'),
+                    success=True,
+                    decision_type=record.get('decision_type', 'hold')
+                )
+                return result
+            # -----------------------------------------------------------------
+
             # Step 1: 获取并保存数据
             success, error = self.fetch_and_save_stock_data(
                 code, current_time=current_time

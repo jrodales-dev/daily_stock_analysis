@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-Report Engine - Jinja2 Report Renderer
+Motor de Relatórios - Renderizador de Relatórios Jinja2
 ===================================
 
-Renders reports from Jinja2 templates. Falls back to caller's logic on template
-missing or render error. Template path is relative to project root.
-Any expensive data preparation should be injected by the caller via extra_context.
+Renderiza relatórios a partir de templates Jinja2. Realiza fallback para a lógica do chamador caso o template esteja ausente ou ocorra erro de renderização. O caminho do template é relativo à raiz do projeto.
+Qualquer preparação de dados custosa deve ser injetada pelo chamador através do extra_context.
 """
 
 import logging
@@ -32,14 +31,14 @@ logger = logging.getLogger(__name__)
 
 
 def _escape_md(text: str) -> str:
-    """Escape markdown special chars (*ST etc)."""
+    """Escapa caracteres especiais do markdown (ex: *ST etc)."""
     if not text:
         return ""
     return text.replace("*", "\\*").replace("_", "\\_")
 
 
 def _clean_sniper_value(val: Any) -> str:
-    """Format sniper point value for display (strip label prefixes)."""
+    """Formata o valor do ponto de atirador para exibição (remove prefixos de rótulo)."""
     if val is None:
         return "N/A"
     if isinstance(val, (int, float)):
@@ -51,6 +50,9 @@ def _clean_sniper_value(val: Any) -> str:
         "理想买入点：", "次优买入点：", "止损位：", "目标位：",
         "理想买入点:", "次优买入点:", "止损位:", "目标位:",
         "Ideal Entry:", "Secondary Entry:", "Stop Loss:", "Target:",
+        "Ponto de compra ideal:", "Ponto de compra secundário:", "Preço de stop loss:", "Preço alvo:",
+        "Preço de compra:", "Preço de stop:", "Alvo:",
+        "Ideal Entry：", "Secondary Entry：", "Stop Loss：", "Target：",
     ]
     for prefix in prefixes:
         if s.startswith(prefix):
@@ -59,7 +61,7 @@ def _clean_sniper_value(val: Any) -> str:
 
 
 def _resolve_templates_dir() -> Path:
-    """Resolve template directory relative to project root."""
+    """Resolve o diretório de templates relativo à raiz do projeto."""
     config = get_config()
     base = Path(__file__).resolve().parent.parent.parent
     templates_dir = Path(config.report_templates_dir)
@@ -76,17 +78,17 @@ def render(
     extra_context: Optional[Dict[str, Any]] = None,
 ) -> Optional[str]:
     """
-    Render report using Jinja2 template.
+    Renderiza o relatório usando o template Jinja2.
 
     Args:
-        platform: One of: markdown, wechat, brief
-        results: List of AnalysisResult
-        report_date: Report date string (default: today)
-        summary_only: Whether to output summary only
-        extra_context: Additional template context
+        platform: Um de: markdown, wechat, brief
+        results: Lista de AnalysisResult
+        report_date: String de data do relatório (padrão: hoje)
+        summary_only: Se deve produzir apenas o resumo
+        extra_context: Contexto adicional de template
 
     Returns:
-        Rendered string, or None on error (caller should fallback).
+        String renderizada, ou None em caso de erro (o chamador deve usar fallback).
     """
     from datetime import datetime
 

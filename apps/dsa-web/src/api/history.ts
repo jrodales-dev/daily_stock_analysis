@@ -10,7 +10,7 @@ import type {
   RunDiagnosticSummary,
 } from '../types/analysis';
 
-// ============ API 接口 ============
+// ============ Interface da API ============
 
 export interface GetHistoryListParams extends HistoryFilters {
   page?: number;
@@ -19,8 +19,8 @@ export interface GetHistoryListParams extends HistoryFilters {
 
 export const historyApi = {
   /**
-   * 获取历史分析列表
-   * @param params 筛选和分页参数
+   * Obter a lista de histórico de análise
+   * @param params Parâmetros de filtro e paginação
    */
   getList: async (params: GetHistoryListParams = {}): Promise<HistoryListResponse> => {
     const { stockCode, startDate, endDate, page = 1, limit = 20 } = params;
@@ -44,8 +44,8 @@ export const historyApi = {
   },
 
   /**
-   * 获取历史报告详情
-   * @param recordId 分析历史记录主键 ID（使用 ID 而非 query_id，因为 query_id 在批量分析时可能重复）
+   * Obter os detalhes do relatório histórico
+   * @param recordId Chave primária do histórico de análise (usar ID em vez de query_id)
    */
   getDetail: async (recordId: number): Promise<AnalysisReport> => {
     const response = await apiClient.get<Record<string, unknown>>(`/api/v1/history/${recordId}`);
@@ -53,9 +53,9 @@ export const historyApi = {
   },
 
   /**
-   * 获取历史报告关联新闻
-   * @param recordId 分析历史记录主键 ID
-   * @param limit 返回数量限制
+   * Obter as notícias associadas ao relatório histórico
+   * @param recordId Chave primária do histórico de análise
+   * @param limit Limite do número de retornos
    */
   getNews: async (recordId: number, limit = 20): Promise<NewsIntelResponse> => {
     const response = await apiClient.get<Record<string, unknown>>(`/api/v1/history/${recordId}/news`, {
@@ -70,9 +70,9 @@ export const historyApi = {
   },
 
   /**
-   * 获取历史报告的 Markdown 格式内容
-   * @param recordId 分析历史记录主键 ID
-   * @returns Markdown 格式的完整报告内容
+   * Obter o conteúdo em formato Markdown do relatório
+   * @param recordId Chave primária do histórico de análise
+   * @returns O conteúdo completo do relatório em formato Markdown
    */
   getMarkdown: async (recordId: number): Promise<string> => {
     const response = await apiClient.get<{ content: string }>(`/api/v1/history/${recordId}/markdown`);
@@ -80,8 +80,8 @@ export const historyApi = {
   },
 
   /**
-   * 获取历史报告运行诊断摘要
-   * @param recordId 分析历史记录主键 ID
+   * Obter o resumo do diagnóstico de execução do relatório histórico
+   * @param recordId Chave primária do histórico de análise
    */
   getDiagnostics: async (recordId: number): Promise<RunDiagnosticSummary> => {
     const response = await apiClient.get<Record<string, unknown>>(`/api/v1/history/${recordId}/diagnostics`);
@@ -89,8 +89,8 @@ export const historyApi = {
   },
 
   /**
-   * 批量删除历史记录
-   * @param recordIds 分析历史记录主键 ID 列表
+   * Excluir registros do histórico em lote
+   * @param recordIds Lista de chaves primárias dos registros
    */
   deleteRecords: async (recordIds: number[]): Promise<{ deleted: number }> => {
     const response = await apiClient.delete<Record<string, unknown>>('/api/v1/history', {

@@ -1,54 +1,149 @@
 import type { ReportLanguage } from '../types/analysis';
 
-export const normalizeReportLanguage = (value?: string | null): ReportLanguage =>
-  value === 'en' ? 'en' : 'zh';
+export const normalizeReportLanguage = (value?: string | null): ReportLanguage => {
+  if (value === 'en') return 'en';
+  if (value === 'pt') return 'zh'; // UI strings use 'zh' key which already has PT translations
+  return 'zh';
+};
+
+/** Maps Chinese/English operation advice values to Portuguese display text. */
+const OPERATION_ADVICE_MAP: Record<string, string> = {
+  // Chinese
+  '强烈买入': 'Forte Compra',
+  '买入': 'Comprar',
+  '加仓': 'Comprar',
+  '持有': 'Manter',
+  '洗盘观察': 'Manter',
+  '观察': 'Observar',
+  '观望': 'Observar',
+  '减仓': 'Reduzir',
+  '卖出': 'Vender',
+  '强烈卖出': 'Forte Venda',
+  // English
+  'strong buy': 'Forte Compra',
+  'buy': 'Comprar',
+  'accumulate': 'Comprar',
+  'hold': 'Manter',
+  'watch': 'Observar',
+  'wait': 'Observar',
+  'reduce': 'Reduzir',
+  'sell': 'Vender',
+  'strong sell': 'Forte Venda',
+};
+
+/** Maps Chinese/English trend prediction values to Portuguese display text. */
+const TREND_PREDICTION_MAP: Record<string, string> = {
+  // Chinese
+  '强烈看多': 'Forte Alta',
+  '看多': 'Alta',
+  '多头排列': 'Alta',
+  '盘整': 'Lateral',
+  '震荡': 'Lateral',
+  '看空': 'Baixa',
+  '空头排列': 'Baixa',
+  '强烈看空': 'Forte Baixa',
+  '强势多头': 'Forte Alta',
+  '弱势多头': 'Alta',
+  '强势空头': 'Forte Baixa',
+  '弱势空头': 'Baixa',
+  // English
+  'strong bullish': 'Forte Alta',
+  'bullish': 'Alta',
+  'uptrend': 'Alta',
+  'sideways': 'Lateral',
+  'neutral': 'Lateral',
+  'range-bound': 'Lateral',
+  'bearish': 'Baixa',
+  'downtrend': 'Baixa',
+  'strong bearish': 'Forte Baixa',
+};
+
+/**
+ * Translate an operationAdvice value (potentially Chinese/English) to Portuguese.
+ * Falls back to the raw value if no mapping is found.
+ */
+export const localizeOperationAdvice = (value?: string | null): string => {
+  if (!value) return '';
+  const trimmed = value.trim();
+  // Try exact match first
+  const exact = OPERATION_ADVICE_MAP[trimmed] || OPERATION_ADVICE_MAP[trimmed.toLowerCase()];
+  if (exact) return exact;
+  // Try matching the first segment (e.g. "卖出/观望" → match "卖出")
+  for (const sep of ['/', '|', ',', '，', '、']) {
+    if (trimmed.includes(sep)) {
+      const first = trimmed.split(sep)[0].trim();
+      const mapped = OPERATION_ADVICE_MAP[first] || OPERATION_ADVICE_MAP[first.toLowerCase()];
+      if (mapped) return mapped;
+    }
+  }
+  return trimmed;
+};
+
+/**
+ * Translate a trendPrediction value (potentially Chinese/English) to Portuguese.
+ * Falls back to the raw value if no mapping is found.
+ */
+export const localizeTrendPrediction = (value?: string | null): string => {
+  if (!value) return '';
+  const trimmed = value.trim();
+  const exact = TREND_PREDICTION_MAP[trimmed] || TREND_PREDICTION_MAP[trimmed.toLowerCase()];
+  if (exact) return exact;
+  for (const sep of ['/', '|', ',', '，', '、']) {
+    if (trimmed.includes(sep)) {
+      const first = trimmed.split(sep)[0].trim();
+      const mapped = TREND_PREDICTION_MAP[first] || TREND_PREDICTION_MAP[first.toLowerCase()];
+      if (mapped) return mapped;
+    }
+  }
+  return trimmed;
+};
 
 const REPORT_TEXT = {
   zh: {
-    keyInsights: '核心洞察',
-    noAnalysisSummary: '暂无分析结论',
-    actionAdvice: '操作建议',
-    noAdvice: '暂无建议',
-    trendPrediction: '趋势预测',
-    noPrediction: '暂无预测',
-    marketSentiment: '市场情绪',
-    strategyPoints: '策略点位',
-    sniperLevels: '狙击点位',
-    idealBuy: '理想买入',
-    secondaryBuy: '二次买入',
-    stopLoss: '止损价位',
-    takeProfit: '止盈目标',
+    keyInsights: 'PRINCIPAIS INSIGHTS',
+    noAnalysisSummary: 'Sem conclusão de análise',
+    actionAdvice: 'Recomendação',
+    noAdvice: 'Sem recomendação',
+    trendPrediction: 'Tendência Prevista',
+    noPrediction: 'Sem previsão',
+    marketSentiment: 'Sentimento de Mercado',
+    strategyPoints: 'PONTOS DE ESTRATÉGIA',
+    sniperLevels: 'Níveis de Ação',
+    idealBuy: 'Entrada Ideal',
+    secondaryBuy: 'Entrada Secundária',
+    stopLoss: 'Stop Loss',
+    takeProfit: 'Take Profit',
     noValue: '—',
-    newsFeed: '资讯动态',
-    relatedNews: '相关资讯',
-    refresh: '刷新',
-    retry: '重试',
-    dismiss: '关闭',
-    details: '查看详情',
-    loadingNews: '加载资讯中...',
-    noNews: '暂无相关资讯',
-    noNewsDescription: '可稍后刷新以获取最新资讯。',
-    openLink: '跳转',
-    transparency: '透明度',
-    traceability: '数据追溯',
-    rawResult: '原始分析结果',
-    analysisSnapshot: '分析快照',
-    copy: '复制',
-    copied: '已复制',
-    recordId: '记录 ID',
-    fullReport: '完整分析报告',
-    loadingReport: '加载报告中...',
-    loadReportFailed: '加载报告失败',
-    copyMarkdownSource: '复制 Markdown 源码',
-    copyPlainText: '复制纯文本',
-    analysisModel: '分析模型',
-    fearGreedIndex: '恐惧贪婪指数',
-    boardLinkage: '板块联动',
-    relatedBoards: '关联板块',
-    leadingBoard: '领涨',
-    laggingBoard: '领跌',
-    neutralBoard: '中性',
-    reanalyze: '重新分析',
+    newsFeed: 'NOTÍCIAS',
+    relatedNews: 'Notícias Relacionadas',
+    refresh: 'Atualizar',
+    retry: 'Tentar Novamente',
+    dismiss: 'Fechar',
+    details: 'Ver Detalhes',
+    loadingNews: 'Carregando notícias...',
+    noNews: 'Sem notícias relacionadas',
+    noNewsDescription: 'Atualize mais tarde para verificar as últimas novidades.',
+    openLink: 'Abrir',
+    transparency: 'TRANSPARÊNCIA',
+    traceability: 'Rastreabilidade de Dados',
+    rawResult: 'Resultado Bruto da Análise',
+    analysisSnapshot: 'Snapshot da Análise',
+    copy: 'Copiar',
+    copied: 'Copiado!',
+    recordId: 'ID do Registro',
+    fullReport: 'Relatório Completo',
+    loadingReport: 'Carregando relatório...',
+    loadReportFailed: 'Falha ao carregar relatório',
+    copyMarkdownSource: 'Copiar Markdown',
+    copyPlainText: 'Copiar Texto',
+    analysisModel: 'Modelo',
+    fearGreedIndex: 'Índice Medo & Ganância',
+    boardLinkage: 'SETOR',
+    relatedBoards: 'Setores Relacionados',
+    leadingBoard: 'Liderando',
+    laggingBoard: 'Atrasado',
+    neutralBoard: 'Neutro',
+    reanalyze: 'Reanalisar',
   },
   en: {
     keyInsights: 'KEY INSIGHTS',
@@ -99,3 +194,4 @@ const REPORT_TEXT = {
 } as const;
 
 export const getReportText = (language?: string | null) => REPORT_TEXT[normalizeReportLanguage(language)];
+

@@ -67,9 +67,9 @@ class AnalyzeRequest(BaseModel):
         pattern=SELECTION_SOURCE_PATTERN,
         json_schema_extra={"example": "autocomplete"},
     )
-    notify: bool = Field(
-        True,
-        description="是否发送推送通知（Telegram/企业微信等）"
+    notify: Optional[bool] = Field(
+        None,
+        description="是否发送推送通知（Telegram/企业微信等）。如果为 None，则读取系统配置"
     )
     skills: Optional[List[str]] = Field(
         None,
@@ -96,9 +96,9 @@ class AnalyzeRequest(BaseModel):
 class MarketReviewRequest(BaseModel):
     """Market review trigger parameters."""
 
-    send_notification: bool = Field(
-        True,
-        description="是否在大盘复盘完成后发送推送通知",
+    send_notification: Optional[bool] = Field(
+        None,
+        description="是否在大盘复盘完成后发送推送通知。如果为 None，则读取系统配置",
     )
 
 

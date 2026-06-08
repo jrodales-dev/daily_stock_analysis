@@ -51,6 +51,8 @@ Requirements:
 """
             if report_language == "en":
                 return prompt + "\nAlways answer in English.\n"
+            elif report_language == "pt":
+                return prompt + "\nAlways answer in Portuguese (pt-BR).\n"
             return prompt + "\n默认使用中文回答。\n"
 
         skills = ""
@@ -115,6 +117,14 @@ new decision_type values.
 - Keep every JSON key unchanged.
 - `decision_type` must remain `buy|hold|sell`.
 - Write all human-readable JSON values in English.
+"""
+        elif report_language == "pt":
+            return prompt + """
+
+## Idioma de Saída
+- Mantenha todas as chaves do JSON inalteradas.
+- `decision_type` deve permanecer como `buy|hold|sell`.
+- Escreva todos os valores JSON legíveis por humanos em Português do Brasil (pt-BR).
 """
         return prompt + """
 

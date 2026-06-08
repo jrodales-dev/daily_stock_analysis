@@ -5,19 +5,19 @@ import { DashboardPanelHeader } from '../dashboard';
 import type { TaskInfo } from '../../types/analysis';
 
 /**
- * 任务项组件属性
+ * Propriedades de Tarefa
  */
 interface TaskItemProps {
   task: TaskInfo;
 }
 
 /**
- * 单个任务项
+ * Tarefa Única
  */
 const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
   const isPending = task.status === 'pending';
   const isProcessing = task.status === 'processing';
-  const statusLabel = isProcessing ? '分析中' : '等待中';
+  const statusLabel = isProcessing ? 'Analisando' : 'Aguardando';
   const statusVariant = isProcessing ? 'info' : 'default';
   const statusTone = isProcessing ? 'info' : 'neutral';
   const progress = Math.max(0, Math.min(100, task.progress || 0));
@@ -25,16 +25,16 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
 
   return (
     <div className="home-subpanel flex items-center gap-3 px-3 py-2.5">
-      {/* 状态图标 */}
+      {/* Ícones de Estado */}
       <div className="shrink-0">
         {isProcessing ? (
-          <StatusDot tone="info" pulse className="h-2.5 w-2.5" aria-label="任务进行中" />
+          <StatusDot tone="info" pulse className="h-2.5 w-2.5" aria-label="Tarefa em andamento" />
         ) : isPending ? (
-          <StatusDot tone="neutral" className="h-2.5 w-2.5" aria-label="任务等待中" />
+          <StatusDot tone="neutral" className="h-2.5 w-2.5" aria-label="Tarefa aguardando" />
         ) : null}
       </div>
 
-      {/* 任务信息 */}
+      {/* Info sobre Processos */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-foreground truncate">
@@ -63,7 +63,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
         {traceId ? (
           <details className="group/task mt-2 text-xs">
             <summary className="flex cursor-pointer list-none items-center gap-2 text-muted-text">
-              <span>运行诊断</span>
+              <span>Diagnóstico de execução</span>
               <span className="font-mono text-[11px] text-secondary-text">
                 {traceId.length > 18 ? `${traceId.slice(0, 10)}...` : traceId}
               </span>
@@ -79,12 +79,12 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
         ) : null}
       </div>
 
-      {/* 状态标签 */}
+      {/* Etiquetas Lógicas */}
       <div className="flex-shrink-0">
         <Badge
           variant={statusVariant}
           className="min-w-[4.75rem] justify-center gap-1.5 shadow-none"
-          aria-label={`任务状态：${statusLabel}`}
+          aria-label={`Status da tarefa: ${statusLabel}`}
         >
           <StatusDot tone={statusTone} pulse={isProcessing} className="h-1.5 w-1.5" />
           {statusLabel}
@@ -95,35 +95,35 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
 };
 
 /**
- * 任务面板属性
+ * Propriedades do Painel
  */
 interface TaskPanelProps {
-  /** 任务列表 */
+  /** Lista de Tarefas */
   tasks: TaskInfo[];
-  /** 是否显示 */
+  /** Deve Exibir */
   visible?: boolean;
-  /** 标题 */
+  /** Título */
   title?: string;
-  /** 自定义类名 */
+  /** Classe CSS Customizada */
   className?: string;
 }
 
 /**
- * 任务面板组件
- * 显示进行中的分析任务列表
+ * Componente Painel de Tarefas
+ * Mostrar Lista de Tarefas Analíticas em Andamento
  */
 export const TaskPanel: React.FC<TaskPanelProps> = ({
   tasks,
   visible = true,
-  title = '分析任务',
+  title = 'Tarefas de análise',
   className = '',
 }) => {
-  // 筛选活跃任务（pending 和 processing）
+  // Otimização que exibe Ativos (Processando ou Em Standby)
   const activeTasks = tasks.filter(
     (t) => t.status === 'pending' || t.status === 'processing'
   );
 
-  // 无任务或不可见时不渲染
+  // Oculta o DOM para salvar Rendering
   if (!visible || activeTasks.length === 0) {
     return null;
   }
@@ -150,14 +150,14 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
             <div className="flex items-center gap-2 text-xs text-muted-text">
               {processingCount > 0 && (
                 <span className="flex items-center gap-1">
-                  <StatusDot tone="info" pulse className="h-1.5 w-1.5" aria-label="进行中任务" />
-                  {processingCount} 进行中
+                  <StatusDot tone="info" pulse className="h-1.5 w-1.5" aria-label="Tarefas em andamento" />
+                  {processingCount} em andamento
                 </span>
               )}
               {pendingCount > 0 ? (
                 <span className="flex items-center gap-1">
-                  <StatusDot tone="neutral" className="h-1.5 w-1.5" aria-label="等待中任务" />
-                  {pendingCount} 等待中
+                  <StatusDot tone="neutral" className="h-1.5 w-1.5" aria-label="Tarefas aguardando" />
+                  {pendingCount} aguardando
                 </span>
               ) : null}
             </div>

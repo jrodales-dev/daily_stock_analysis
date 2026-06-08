@@ -30,7 +30,7 @@ export class SystemConfigValidationError extends Error {
     this.name = 'SystemConfigValidationError';
     this.issues = issues;
     this.parsedError = parsedError ?? createParsedApiError({
-      title: '配置校验失败',
+      title: 'Falha na Validação da Configuração',
       message,
       rawMessage: message,
       status: 400,
@@ -48,7 +48,7 @@ export class SystemConfigConflictError extends Error {
     this.name = 'SystemConfigConflictError';
     this.currentConfigVersion = currentConfigVersion;
     this.parsedError = parsedError ?? createParsedApiError({
-      title: '配置版本冲突',
+      title: 'Conflito de Versão da Configuração',
       message,
       rawMessage: message,
       status: 409,
@@ -110,8 +110,8 @@ function toSnakeNotificationTestPayload(payload: TestNotificationChannelRequest)
       value: item.value,
     })),
     mask_token: payload.maskToken ?? '******',
-    title: payload.title ?? 'DSA 通知测试',
-    content: payload.content ?? '这是一条来自 DSA Web 设置页的通知测试消息。',
+    title: payload.title ?? 'Teste de Notificação DSA',
+    content: payload.content ?? 'Esta é uma mensagem de teste de notificação vinda da página de configurações da Web do DSA.',
     timeout_seconds: payload.timeoutSeconds ?? 20,
   };
 }
@@ -216,7 +216,7 @@ export const systemConfigApi = {
         if (status === 400) {
           const validationError = toCamelCase<SystemConfigValidationErrorResponse>(payloadData ?? {});
           throw new SystemConfigValidationError(
-            parsed.message || validationError.message || '配置校验失败',
+            parsed.message || validationError.message || 'Falha na validação da configuração',
             validationError.issues || [],
             parsed,
           );
@@ -225,7 +225,7 @@ export const systemConfigApi = {
         if (status === 409) {
           const conflict = toCamelCase<SystemConfigConflictResponse>(payloadData ?? {});
           throw new SystemConfigConflictError(
-            parsed.message || conflict.message || '配置版本冲突',
+            parsed.message || conflict.message || 'Conflito de versão da configuração',
             conflict.currentConfigVersion,
             parsed,
           );

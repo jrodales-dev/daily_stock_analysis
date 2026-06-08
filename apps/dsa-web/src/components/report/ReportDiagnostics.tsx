@@ -11,6 +11,7 @@ import type {
 } from '../../types/analysis';
 import { normalizeReportLanguage } from '../../utils/reportLanguage';
 import { Badge, Button, Card, StatusDot } from '../common';
+import { DashboardPanelHeader } from '../dashboard';
 
 interface ReportDiagnosticsProps {
   recordId?: number;
@@ -32,32 +33,32 @@ const COMPONENT_ORDER = [
 
 const TEXT = {
   zh: {
-    eyebrow: '运行诊断',
-    title: '运行状态',
-    loading: '诊断加载中...',
-    unavailable: '运行诊断暂不可用',
-    noComponents: '暂无组件诊断',
-    components: '关键链路',
-    advanced: '高级字段',
-    copy: '复制排障信息',
-    copied: '已复制',
+    eyebrow: 'Diagnóstico de Execução',
+    title: 'Status de Execução',
+    loading: 'Carregando diagnóstico...',
+    unavailable: 'Diagnóstico indisponível no momento',
+    noComponents: 'Sem diagnóstico de componentes',
+    components: 'Cadeia de Links Críticos',
+    advanced: 'Campos Avançados',
+    copy: 'Copiar Informações',
+    copied: 'Copiado',
     trace: 'Trace',
     task: 'Task',
     query: 'Query',
-    trigger: '触发来源',
+    trigger: 'Origem do Disparo',
     overall: {
-      normal: '正常',
-      degraded: '部分降级',
-      failed: '失败',
-      unknown: '未知',
+      normal: 'Normal',
+      degraded: 'Parcialmente Degradado',
+      failed: 'Falhou',
+      unknown: 'Desconhecido',
     },
     component: {
-      ok: '正常',
-      degraded: '最近失败后已降级',
-      failed: '失败',
-      unknown: '未知',
-      not_configured: '未配置',
-      skipped: '已跳过',
+      ok: 'OK',
+      degraded: 'Degradado (Falha Recente)',
+      failed: 'Falhou',
+      unknown: 'Desconhecido',
+      not_configured: 'Não Configurado',
+      skipped: 'Ignorado',
     },
   },
   en: {
@@ -267,28 +268,28 @@ export const ReportDiagnostics: React.FC<ReportDiagnosticsProps> = ({
   return (
     <Card variant="bordered" padding="none" className="home-panel-card text-left">
       <details data-testid="run-diagnostics" className="group">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan/10 text-cyan">
-              <Activity className="h-4 w-4" aria-hidden="true" />
-            </span>
-            <span className="min-w-0">
-              <span className="label-uppercase">{text.eyebrow}</span>
-              <span className="mt-0.5 block truncate text-base font-semibold text-foreground">
-                {text.title}
+        <summary className="cursor-pointer list-none px-4 py-4 group-open:pb-0 group-open:mb-4 focus:outline-none">
+          <DashboardPanelHeader
+            title={text.title}
+            className="mb-0"
+            leading={(
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan/10 text-cyan">
+                <Activity className="h-4 w-4" aria-hidden="true" />
               </span>
-            </span>
-          </div>
-          <span className="flex shrink-0 items-center gap-2">
-            {isLoading ? (
-              <span className="home-spinner h-3.5 w-3.5 animate-spin border-2" aria-hidden="true" />
-            ) : null}
-            <Badge variant={statusStyle.variant} className="gap-1.5 shadow-none">
-              <StatusDot tone={statusStyle.tone} className="h-1.5 w-1.5" />
-              {statusLabel}
-            </Badge>
-            <ChevronDown className="h-4 w-4 text-muted-text transition-transform group-open:rotate-180" aria-hidden="true" />
-          </span>
+            )}
+            actions={(
+              <span className="flex shrink-0 items-center gap-2">
+                {isLoading ? (
+                  <span className="home-spinner h-3.5 w-3.5 animate-spin border-2" aria-hidden="true" />
+                ) : null}
+                <Badge variant={statusStyle.variant} className="gap-1.5 shadow-none">
+                  <StatusDot tone={statusStyle.tone} className="h-1.5 w-1.5" />
+                  {statusLabel}
+                </Badge>
+                <ChevronDown className="h-4 w-4 text-muted-text transition-transform group-open:rotate-180" aria-hidden="true" />
+              </span>
+            )}
+          />
         </summary>
 
         <div className="home-divider space-y-4 border-t px-4 pb-4 pt-3">

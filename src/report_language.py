@@ -6,7 +6,7 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, Optional
 
-SUPPORTED_REPORT_LANGUAGES = ("zh", "en")
+SUPPORTED_REPORT_LANGUAGES = ("zh", "en", "pt")
 
 _REPORT_LANGUAGE_ALIASES = {
     "zh-cn": "zh",
@@ -22,6 +22,10 @@ _REPORT_LANGUAGE_ALIASES = {
     "en_us": "en",
     "en-gb": "en",
     "en_gb": "en",
+    "pt-br": "pt",
+    "pt_br": "pt",
+    "portuguese": "pt",
+    "português": "pt",
 }
 
 _OPERATION_ADVICE_CANONICAL_MAP = {
@@ -49,16 +53,23 @@ _OPERATION_ADVICE_CANONICAL_MAP = {
     "强烈卖出": "strong_sell",
     "strong sell": "strong_sell",
     "strong_sell": "strong_sell",
+    "forte compra": "strong_buy",
+    "compra": "buy",
+    "manter": "hold",
+    "observar": "watch",
+    "reduzir": "reduce",
+    "venda": "sell",
+    "forte venda": "strong_sell",
 }
 
 _OPERATION_ADVICE_TRANSLATIONS = {
-    "strong_buy": {"zh": "强烈买入", "en": "Strong Buy"},
-    "buy": {"zh": "买入", "en": "Buy"},
-    "hold": {"zh": "持有", "en": "Hold"},
-    "watch": {"zh": "观望", "en": "Watch"},
-    "reduce": {"zh": "减仓", "en": "Reduce"},
-    "sell": {"zh": "卖出", "en": "Sell"},
-    "strong_sell": {"zh": "强烈卖出", "en": "Strong Sell"},
+    "strong_buy": {"zh": "强烈买入", "en": "Strong Buy", "pt": "Forte Compra"},
+    "buy": {"zh": "买入", "en": "Buy", "pt": "Compra"},
+    "hold": {"zh": "持有", "en": "Hold", "pt": "Manter"},
+    "watch": {"zh": "观望", "en": "Watch", "pt": "Observar"},
+    "reduce": {"zh": "减仓", "en": "Reduce", "pt": "Reduzir"},
+    "sell": {"zh": "卖出", "en": "Sell", "pt": "Venda"},
+    "strong_sell": {"zh": "强烈卖出", "en": "Strong Sell", "pt": "Forte Venda"},
 }
 
 _TREND_PREDICTION_CANONICAL_MAP = {
@@ -85,14 +96,19 @@ _TREND_PREDICTION_CANONICAL_MAP = {
     "强烈看空": "strong_bearish",
     "strong bearish": "strong_bearish",
     "very bearish": "strong_bearish",
+    "fortemente alta": "strong_bullish",
+    "alta": "bullish",
+    "lateral": "sideways",
+    "baixa": "bearish",
+    "fortemente baixa": "strong_bearish",
 }
 
 _TREND_PREDICTION_TRANSLATIONS = {
-    "strong_bullish": {"zh": "强烈看多", "en": "Strong Bullish"},
-    "bullish": {"zh": "看多", "en": "Bullish"},
-    "sideways": {"zh": "震荡", "en": "Sideways"},
-    "bearish": {"zh": "看空", "en": "Bearish"},
-    "strong_bearish": {"zh": "强烈看空", "en": "Strong Bearish"},
+    "strong_bullish": {"zh": "强烈看多", "en": "Strong Bullish", "pt": "Forte Alta"},
+    "bullish": {"zh": "看多", "en": "Bullish", "pt": "Alta"},
+    "sideways": {"zh": "震荡", "en": "Sideways", "pt": "Lateral"},
+    "bearish": {"zh": "看空", "en": "Bearish", "pt": "Baixa"},
+    "strong_bearish": {"zh": "强烈看空", "en": "Strong Bearish", "pt": "Forte Baixa"},
 }
 
 _CONFIDENCE_LEVEL_CANONICAL_MAP = {
@@ -103,12 +119,18 @@ _CONFIDENCE_LEVEL_CANONICAL_MAP = {
     "med": "medium",
     "低": "low",
     "low": "low",
+    "alto": "high",
+    "alta": "high",
+    "médio": "medium",
+    "média": "medium",
+    "baixo": "low",
+    "baixa": "low",
 }
 
 _CONFIDENCE_LEVEL_TRANSLATIONS = {
-    "high": {"zh": "高", "en": "High"},
-    "medium": {"zh": "中", "en": "Medium"},
-    "low": {"zh": "低", "en": "Low"},
+    "high": {"zh": "高", "en": "High", "pt": "Alta"},
+    "medium": {"zh": "中", "en": "Medium", "pt": "Média"},
+    "low": {"zh": "低", "en": "Low", "pt": "Baixa"},
 }
 
 _CHIP_HEALTH_CANONICAL_MAP = {
@@ -118,12 +140,15 @@ _CHIP_HEALTH_CANONICAL_MAP = {
     "average": "average",
     "警惕": "caution",
     "caution": "caution",
+    "saudável": "healthy",
+    "regular": "average",
+    "cuidado": "caution",
 }
 
 _CHIP_HEALTH_TRANSLATIONS = {
-    "healthy": {"zh": "健康", "en": "Healthy"},
-    "average": {"zh": "一般", "en": "Average"},
-    "caution": {"zh": "警惕", "en": "Caution"},
+    "healthy": {"zh": "健康", "en": "Healthy", "pt": "Saudável"},
+    "average": {"zh": "一般", "en": "Average", "pt": "Regular"},
+    "caution": {"zh": "警惕", "en": "Caution", "pt": "Cuidado"},
 }
 
 _BIAS_STATUS_CANONICAL_MAP = {
@@ -132,35 +157,44 @@ _BIAS_STATUS_CANONICAL_MAP = {
     "警戒": "caution",
     "警惕": "caution",
     "caution": "caution",
+    "saudável": "healthy",
+    "regular": "average",
+    "cuidado": "caution",
     "危险": "danger",
     "risk": "danger",
     "danger": "danger",
+    "seguro": "safe",
+    "perigo": "danger",
 }
 
 _BIAS_STATUS_TRANSLATIONS = {
-    "safe": {"zh": "安全", "en": "Safe"},
-    "caution": {"zh": "警戒", "en": "Caution"},
-    "danger": {"zh": "危险", "en": "Danger"},
+    "safe": {"zh": "安全", "en": "Safe", "pt": "Seguro"},
+    "caution": {"zh": "警戒", "en": "Caution", "pt": "Cuidado"},
+    "danger": {"zh": "危险", "en": "Danger", "pt": "Perigo"},
 }
 
 _PLACEHOLDER_BY_LANGUAGE = {
     "zh": "待补充",
     "en": "TBD",
+    "pt": "A definir",
 }
 
 _UNKNOWN_BY_LANGUAGE = {
     "zh": "未知",
     "en": "Unknown",
+    "pt": "Desconhecido",
 }
 
 _NO_DATA_BY_LANGUAGE = {
     "zh": "数据缺失",
     "en": "Data unavailable",
+    "pt": "Dados indisponíveis",
 }
 
 _CHIP_UNAVAILABLE_BY_LANGUAGE = {
     "zh": "筹码分布未启用或数据源暂不可用，未纳入筹码判断。",
     "en": "Chip distribution is disabled or temporarily unavailable; chip signals were not used.",
+    "pt": "Distribuição de volume indisponível.",
 }
 
 _CHIP_PLACEHOLDER_EXACT = {
@@ -197,6 +231,7 @@ _CHIP_UNAVAILABLE_REASON_KEYS = (
 _GENERIC_STOCK_NAME_BY_LANGUAGE = {
     "zh": "待确认股票",
     "en": "Unnamed Stock",
+    "pt": "Ação Sem Nome",
 }
 
 _REPORT_LABELS: Dict[str, Dict[str, str]] = {
@@ -300,6 +335,107 @@ _REPORT_LABELS: Dict[str, Dict[str, str]] = {
         "board_change_pct_label": "板块涨跌幅",
         "leading_board_label": "领涨",
         "lagging_board_label": "领跌",
+    },
+    "pt": {
+        "dashboard_title": "Painel de Decisão",
+        "brief_title": "Resumo de Decisão",
+        "analyzed_prefix": "Analisado",
+        "stock_unit": "ações",
+        "stock_unit_compact": "ações",
+        "buy_label": "Comprar",
+        "watch_label": "Observar",
+        "sell_label": "Vender",
+        "summary_heading": "Resumo",
+        "info_heading": "Atualizações",
+        "sentiment_summary_label": "Sentimento",
+        "earnings_outlook_label": "Perspectiva de Lucro",
+        "risk_alerts_label": "Alertas de Risco",
+        "positive_catalysts_label": "Catalisadores Positivos",
+        "latest_news_label": "Últimas Notícias",
+        "core_conclusion_heading": "Conclusão Central",
+        "one_sentence_label": "Decisão Rápida",
+        "time_sensitivity_label": "Sensibilidade de Tempo",
+        "default_time_sensitivity": "Esta semana",
+        "position_status_label": "Posição",
+        "action_advice_label": "Ação",
+        "no_position_label": "Sem Posição",
+        "has_position_label": "Mantendo",
+        "continue_holding": "Continuar mantendo",
+        "market_snapshot_heading": "Visão do Mercado",
+        "close_label": "Fechamento",
+        "prev_close_label": "Fechamento Ant.",
+        "open_label": "Abertura",
+        "high_label": "Máxima",
+        "low_label": "Mínima",
+        "change_pct_label": "Mudança %",
+        "change_amount_label": "Mudança",
+        "amplitude_label": "Amplitude",
+        "volume_label": "Volume",
+        "amount_label": "Negociado",
+        "current_price_label": "Preço",
+        "volume_ratio_label": "Razão de Vol.",
+        "turnover_rate_label": "Taxa de Rot.",
+        "source_label": "Fonte",
+        "data_perspective_heading": "Visão de Dados",
+        "ma_alignment_label": "Alinhamento MA",
+        "bullish_alignment_label": "Alinhamento de Alta",
+        "yes_label": "Sim",
+        "no_label": "Não",
+        "trend_strength_label": "Força da Tendência",
+        "price_metrics_label": "Métricas de Preço",
+        "ma5_label": "MA5",
+        "ma10_label": "MA10",
+        "ma20_label": "MA20",
+        "bias_ma5_label": "Viés (MA5)",
+        "support_level_label": "Suporte",
+        "resistance_level_label": "Resistência",
+        "chip_label": "Estrutura Vol.",
+        "battle_plan_heading": "Plano de Ação",
+        "ideal_buy_label": "Entrada Ideal",
+        "secondary_buy_label": "Entrada Secundária",
+        "stop_loss_label": "Stop Loss",
+        "take_profit_label": "Alvo",
+        "suggested_position_label": "Tamanho da Posição",
+        "entry_plan_label": "Plano de Entrada",
+        "risk_control_label": "Controle de Risco",
+        "checklist_heading": "Checklist",
+        "failed_checks_heading": "Testes Falhos",
+        "history_compare_heading": "Comparação de Sinal Hist.",
+        "time_label": "Tempo",
+        "score_label": "Pontuação",
+        "advice_label": "Conselho",
+        "trend_label": "Tendência",
+        "generated_at_label": "Gerado Em",
+        "report_time_label": "Gerado",
+        "no_results": "Sem resultados de análise",
+        "report_title": "Relatório de Análise de Ações",
+        "avg_score_label": "Pontuação Média",
+        "action_points_heading": "Níveis de Ação",
+        "position_advice_heading": "Conselho de Posição",
+        "analysis_model_label": "Modelo",
+        "not_investment_advice": "Conteúdo gerado por IA para referência apenas.",
+        "details_report_hint": "Ver relatório detalhado:",
+        "financial_summary_heading": "Resumo Financeiro",
+        "report_date_label": "Data do Relatório",
+        "revenue_label": "Receita",
+        "net_profit_label": "Lucro Líquido",
+        "operating_cash_flow_label": "Fluxo de Caixa Op.",
+        "roe_label": "ROE",
+        "revenue_yoy_label": "Receita YoY",
+        "net_profit_yoy_label": "Lucro Líquido YoY",
+        "gross_margin_label": "Margem Bruta",
+        "shareholder_return_heading": "Retorno ao Acionista",
+        "ttm_cash_dividend_label": "Div. em Dinheiro TTM / Ação",
+        "ttm_event_count_label": "Eventos de Div. TTM",
+        "ttm_dividend_yield_label": "Yield de Div. TTM",
+        "latest_ex_dividend_label": "Última Data Ex-dividendos",
+        "related_boards_heading": "Setores Relacionados",
+        "board_name_label": "Setor",
+        "board_type_label": "Tipo",
+        "board_status_label": "Status",
+        "board_change_pct_label": "Mudança %",
+        "leading_board_label": "Liderando",
+        "lagging_board_label": "Atrasado",
     },
     "en": {
         "dashboard_title": "Decision Dashboard",
@@ -802,6 +938,17 @@ def get_sentiment_label(score: int, language: Optional[str]) -> str:
         if score >= 20:
             return "Bearish"
         return "Very Bearish"
+
+    if normalized == "pt":
+        if score >= 80:
+            return "Muito Otimista"
+        if score >= 60:
+            return "Otimista"
+        if score >= 40:
+            return "Neutro"
+        if score >= 20:
+            return "Pessimista"
+        return "Muito Pessimista"
 
     if score >= 80:
         return "极度乐观"

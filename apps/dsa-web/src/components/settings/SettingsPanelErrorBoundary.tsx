@@ -39,8 +39,8 @@ function getSafeErrorSummary(error: unknown) {
     ? error.message
     : typeof error === 'string'
       ? error
-      : '未知前端运行时异常';
-  const normalized = rawMessage.replace(/\s+/g, ' ').trim() || '未知前端运行时异常';
+      : 'Erro Runtime Frontend Desconhecido';
+  const normalized = rawMessage.replace(/\s+/g, ' ').trim() || 'Erro Runtime Frontend Desconhecido';
   const sanitized = sanitizeUrlLikeText(normalized)
     .replace(/\bBearer\s+[A-Za-z0-9._~+/=-]{8,}/gi, 'Bearer [redacted]')
     .replace(/\b(sk-[A-Za-z0-9_-]{8,})\b/g, '[redacted-key]')
@@ -90,21 +90,21 @@ export class SettingsPanelErrorBoundary extends Component<
     return (
       <div className={cn('rounded-[1.5rem] border settings-border bg-card/94 p-5 shadow-soft-card-strong backdrop-blur-sm', this.props.className)}>
         <InlineAlert
-          title={`${this.props.title}加载失败`}
+          title={`Error: ${this.props.title}`}
           variant="danger"
           message={(
             <div className="space-y-2">
               <p>
-                该设置区域发生前端运行时异常，页面其他设置仍可继续使用。
+                Componente Específico Caiu. A Instância Principal segue funcionando.
               </p>
               {this.props.diagnosticHint ? (
                 <p>{this.props.diagnosticHint}</p>
               ) : (
-                <p>请补充 release 版本、运行环境和触发入口，便于定位问题。</p>
+                <p>Insira a versão e ambiente para os Logs.</p>
               )}
               {this.state.errorSummary ? (
                 <p className="break-words font-mono text-xs opacity-80">
-                  错误摘要：{this.state.errorSummary}
+                  Resumo do Erro: {this.state.errorSummary}
                 </p>
               ) : null}
             </div>

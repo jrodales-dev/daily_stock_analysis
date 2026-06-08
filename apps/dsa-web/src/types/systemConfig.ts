@@ -24,7 +24,8 @@ export type SystemConfigUIControl =
   | 'select'
   | 'textarea'
   | 'switch'
-  | 'time';
+  | 'time'
+  | 'checkbox-group';
 
 export interface SystemConfigOption {
   label: string;

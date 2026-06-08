@@ -23,35 +23,35 @@ export interface LLMProviderTemplate {
 
 export const LLM_PROVIDER_CAPABILITY_LABELS: Record<LLMProviderCapability, { label: string; hint: string }> = {
   'openai-compatible': {
-    label: 'OpenAI 兼容',
-    hint: '按 OpenAI-compatible endpoint 配置 Base URL，不额外拼接 /chat/completions。',
+    label: 'Compatível OpenAI',
+    hint: 'Configure a Base URL como um endpoint compatível com OpenAI; não adiciona /chat/completions automaticamente.',
   },
   aggregator: {
-    label: '聚合平台',
-    hint: '模型可见性、路由和价格可能随账号权限与平台策略变化。',
+    label: 'Plataforma Agregadora',
+    hint: 'Visibilidade de modelos, roteamento e preços podem variar conforme permissões e políticas da plataforma.',
   },
   'official-api': {
-    label: '官方 API',
-    hint: '使用服务商官方协议或官方兼容入口。',
+    label: 'API Oficial',
+    hint: 'Usa o protocolo oficial do provedor ou o endpoint de compatibilidade oficial.',
   },
   'model-discovery': {
-    label: '可获取模型',
-    hint: '支持尝试通过 /models 获取模型列表；实际结果仍取决于账号权限和 API Key。',
+    label: 'Descoberta de Modelos',
+    hint: 'Suporta obter modelos via /models; resultados reais dependem de permissões e API Key.',
   },
   vision: {
-    label: 'Vision 提示',
-    hint: '模板提示该 provider 常用于 Vision 场景；具体模型能力仍以账号和模型列表为准。',
+    label: 'Vision',
+    hint: 'Este provedor é comumente usado para tarefas Vision; capacidades reais dependem da conta e modelos disponíveis.',
   },
   'local-runtime': {
-    label: '本地运行',
-    hint: '需要当前运行环境能访问对应本地服务。',
+    label: 'Execução Local',
+    hint: 'Requer que o ambiente de execução atual possa acessar o serviço local.',
   },
 };
 
 export const LLM_PROVIDER_TEMPLATES: LLMProviderTemplate[] = [
   {
     channelId: 'aihubmix',
-    label: 'AIHubmix（聚合平台）',
+    label: 'AIHubmix (Agregador)',
     protocol: 'openai',
     baseUrl: 'https://aihubmix.com/v1',
     placeholderModels: 'gpt-5.5,claude-sonnet-4-6,gemini-3.1-pro-preview',
@@ -60,13 +60,12 @@ export const LLM_PROVIDER_TEMPLATES: LLMProviderTemplate[] = [
   },
   {
     channelId: 'anspire',
-    label: 'Anspire Open（一站式模型+搜索）',
+    label: 'Anspire Open (Modelos + Busca)',
     protocol: 'openai',
     baseUrl: 'https://open-gateway.anspire.cn/v6',
     placeholderModels: 'Doubao-Seed-2.0-lite,Doubao-Seed-2.0-pro,qwen3.5-flash,MiniMax-M2.7',
     capabilities: ['openai-compatible'],
-    configHint:
-      '同一 ANSPIRE_API_KEYS 可复用到搜索与 LLM 渠道。以下模型与网关为配置示例，实际可用性请以账号权限和控制台为准；建议先点“测试连接”确认。',
+    configHint: 'Você pode reutilizar KEYs globais. Use a função Testar Conexão a cada preenchimento.',
     officialSources: [
       { label: 'Anspire Open', url: 'https://open.anspire.cn/?share_code=QFBC0FYC' },
       {
@@ -77,7 +76,7 @@ export const LLM_PROVIDER_TEMPLATES: LLMProviderTemplate[] = [
   },
   {
     channelId: 'deepseek',
-    label: 'DeepSeek 官方',
+    label: 'DeepSeek Oficial',
     protocol: 'deepseek',
     baseUrl: 'https://api.deepseek.com',
     placeholderModels: 'deepseek-v4-flash,deepseek-v4-pro',
@@ -86,7 +85,7 @@ export const LLM_PROVIDER_TEMPLATES: LLMProviderTemplate[] = [
   },
   {
     channelId: 'dashscope',
-    label: '通义千问（Dashscope）',
+    label: 'Tongyi Qianwen (Dashscope)',
     protocol: 'openai',
     baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
     placeholderModels: 'qwen3.6-plus,qwen3.6-flash',
@@ -97,7 +96,7 @@ export const LLM_PROVIDER_TEMPLATES: LLMProviderTemplate[] = [
   },
   {
     channelId: 'zhipu',
-    label: '智谱 GLM',
+    label: 'Zhipu GLM',
     protocol: 'openai',
     baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
     placeholderModels: 'glm-5.1,glm-4.7-flash',
@@ -106,7 +105,7 @@ export const LLM_PROVIDER_TEMPLATES: LLMProviderTemplate[] = [
   },
   {
     channelId: 'moonshot',
-    label: 'Moonshot（月之暗面）',
+    label: 'Moonshot (Kimi)',
     protocol: 'openai',
     baseUrl: 'https://api.moonshot.cn/v1',
     placeholderModels: 'kimi-k2.6,kimi-k2.5',
@@ -115,7 +114,7 @@ export const LLM_PROVIDER_TEMPLATES: LLMProviderTemplate[] = [
   },
   {
     channelId: 'minimax',
-    label: 'MiniMax 官方',
+    label: 'MiniMax Oficial',
     protocol: 'openai',
     baseUrl: 'https://api.minimax.io/v1',
     placeholderModels: 'MiniMax-M2.7,MiniMax-M2.7-highspeed',
@@ -127,12 +126,12 @@ export const LLM_PROVIDER_TEMPLATES: LLMProviderTemplate[] = [
   },
   {
     channelId: 'volcengine',
-    label: '火山方舟（豆包）',
+    label: 'VolcEngine Ark (Doubao)',
     protocol: 'openai',
     baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
     placeholderModels: 'doubao-seed-1-6-251015,doubao-seed-1-6-thinking-251015',
     capabilities: ['openai-compatible'],
-    configHint: '确认在线推理 endpoint / region 与 Coding Plan 专用入口不要混用。',
+    configHint: 'Certifique-se de não misturar endpoint / região de inferência online com o endpoint exclusivo do Coding Plan.',
     officialSources: [
       { label: 'Volcengine Ark Inference', url: 'https://www.volcengine.com/docs/82379/2121998' },
       { label: 'Volcengine Ark Models', url: 'https://www.volcengine.com/docs/82379/1949118' },
@@ -140,12 +139,12 @@ export const LLM_PROVIDER_TEMPLATES: LLMProviderTemplate[] = [
   },
   {
     channelId: 'siliconflow',
-    label: '硅基流动（SiliconFlow）',
+    label: 'SiliconFlow',
     protocol: 'openai',
     baseUrl: 'https://api.siliconflow.cn/v1',
     placeholderModels: 'deepseek-ai/DeepSeek-V3.2,Qwen/Qwen3-235B-A22B-Thinking-2507',
     capabilities: ['openai-compatible', 'model-discovery'],
-    configHint: '模型列表和模型可见性依赖账号权限与 API Key。',
+    configHint: 'Lista de modelos e visibilidade dependem das permissões da conta e API Key.',
     officialSources: [{ label: 'SiliconFlow Models', url: 'https://docs.siliconflow.cn/quickstart/models' }],
   },
   {
@@ -155,14 +154,14 @@ export const LLM_PROVIDER_TEMPLATES: LLMProviderTemplate[] = [
     baseUrl: 'https://openrouter.ai/api/v1',
     placeholderModels: '~anthropic/claude-sonnet-latest,~openai/gpt-latest',
     capabilities: ['openai-compatible', 'aggregator', 'model-discovery'],
-    configHint: '模型列表和模型可见性依赖账号权限与 API Key。',
+    configHint: 'Lista de modelos e visibilidade dependem das permissões da conta e API Key.',
     officialSources: [
       { label: 'OpenRouter Models API', url: 'https://openrouter.ai/docs/api/api-reference/models/get-models' },
     ],
   },
   {
     channelId: 'gemini',
-    label: 'Gemini 官方',
+    label: 'Gemini Oficial',
     protocol: 'gemini',
     baseUrl: '',
     placeholderModels: 'gemini-3.1-pro-preview,gemini-3-flash-preview',
@@ -171,7 +170,7 @@ export const LLM_PROVIDER_TEMPLATES: LLMProviderTemplate[] = [
   },
   {
     channelId: 'anthropic',
-    label: 'Anthropic 官方',
+    label: 'Anthropic Oficial',
     protocol: 'anthropic',
     baseUrl: '',
     placeholderModels: 'claude-sonnet-4-6,claude-opus-4-7',
@@ -182,7 +181,7 @@ export const LLM_PROVIDER_TEMPLATES: LLMProviderTemplate[] = [
   },
   {
     channelId: 'openai',
-    label: 'OpenAI 官方',
+    label: 'OpenAI Oficial',
     protocol: 'openai',
     baseUrl: 'https://api.openai.com/v1',
     placeholderModels: 'gpt-5.5,gpt-5.4-mini',
@@ -191,17 +190,17 @@ export const LLM_PROVIDER_TEMPLATES: LLMProviderTemplate[] = [
   },
   {
     channelId: 'ollama',
-    label: 'Ollama（本地）',
+    label: 'Ollama (Local)',
     protocol: 'ollama',
     baseUrl: 'http://127.0.0.1:11434',
     placeholderModels: 'llama3.2,qwen2.5',
     capabilities: ['local-runtime'],
-    configHint: '需要本机、Docker 或 self-hosted runner 能访问 Ollama 服务。',
+    configHint: 'Requer que a máquina local, Docker ou self-hosted runner possa acessar o serviço Ollama.',
     officialSources: [{ label: 'Ollama API', url: 'https://github.com/ollama/ollama/blob/main/docs/api.md' }],
   },
   {
     channelId: 'custom',
-    label: '自定义渠道',
+    label: 'Canal Personalizado',
     protocol: 'openai',
     baseUrl: '',
     placeholderModels: 'model-name-1,model-name-2',

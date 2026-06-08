@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-全局异常处理中间件
+Middleware de Tratamento Global de Exceções
 ===================================
 
-职责：
-1. 捕获未处理的异常
-2. 统一错误响应格式
-3. 记录错误日志
+Responsabilidades:
+1. Capturar exceções não tratadas
+2. Padronizar o formato de resposta de erro
+3. Registrar logs de erro
 """
 
 import logging
@@ -23,9 +23,9 @@ logger = logging.getLogger(__name__)
 
 class ErrorHandlerMiddleware(BaseHTTPMiddleware):
     """
-    全局异常处理中间件
+    Middleware de tratamento global de exceções
     
-    捕获所有未处理的异常，返回统一格式的错误响应
+    Captura todas as exceções não tratadas e retorna uma resposta de erro em formato padronizado
     """
     
     async def dispatch(
@@ -34,34 +34,34 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
         call_next: Callable
     ) -> Response:
         """
-        处理请求，捕获异常
+        Processa a requisição, capturando exceções
         
         Args:
-            request: 请求对象
-            call_next: 下一个处理器
+            request: Objeto da requisição
+            call_next: Próximo processador
             
         Returns:
-            Response: 响应对象
+            Response: Objeto de resposta
         """
         try:
             response = await call_next(request)
             return response
             
         except Exception as e:
-            # 记录错误日志
+            # Registra o log de erro
             logger.error(
-                f"未处理的异常: {e}\n"
-                f"请求路径: {request.url.path}\n"
-                f"请求方法: {request.method}\n"
-                f"堆栈: {traceback.format_exc()}"
+                f"Exceção não tratada: {e}\n"
+                f"Caminho da requisição: {request.url.path}\n"
+                f"Método da requisição: {request.method}\n"
+                f"Pilha de execução: {traceback.format_exc()}"
             )
             
-            # 返回统一格式的错误响应
+            # Retorna a resposta de erro em formato padronizado
             return JSONResponse(
                 status_code=500,
                 content={
                     "error": "internal_error",
-                    "message": "服务器内部错误，请稍后重试",
+                    "message": "Erro interno do servidor, por favor tente novamente mais tarde",
                     "detail": str(e) if logger.isEnabledFor(logging.DEBUG) else None
                 }
             )
@@ -69,26 +69,26 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
 
 def add_error_handlers(app) -> None:
     """
-    添加全局异常处理器
+    Adiciona manipuladores de exceção globais
     
-    为 FastAPI 应用添加各类异常的处理器
+    Adiciona manipuladores para vários tipos de exceções ao aplicativo FastAPI
     
     Args:
-        app: FastAPI 应用实例
+        app: Instância do aplicativo FastAPI
     """
     from fastapi import HTTPException
     from fastapi.exceptions import RequestValidationError
     
     @app.exception_handler(HTTPException)
     async def http_exception_handler(request: Request, exc: HTTPException):
-        """处理 HTTP 异常"""
-        # 如果 detail 已经是 ErrorResponse 格式的 dict，直接使用
+        """Trata exceções HTTP"""
+        # Se detail já for um dict no formato ErrorResponse, usa-o diretamente
         if isinstance(exc.detail, dict) and "error" in exc.detail and "message" in exc.detail:
             return JSONResponse(
                 status_code=exc.status_code,
                 content=exc.detail
             )
-        # 否则将 detail 包装成 ErrorResponse 格式
+        # Caso contrário, empacota o detail no formato ErrorResponse
         return JSONResponse(
             status_code=exc.status_code,
             content={
@@ -100,29 +100,29 @@ def add_error_handlers(app) -> None:
     
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError):
-        """处理请求验证异常"""
+        """Trata exceções de validação de requisição"""
         return JSONResponse(
             status_code=422,
             content={
                 "error": "validation_error",
-                "message": "请求参数验证失败",
+                "message": "Falha na validação dos parâmetros da requisição",
                 "detail": exc.errors()
             }
         )
     
     @app.exception_handler(Exception)
     async def general_exception_handler(request: Request, exc: Exception):
-        """处理通用异常"""
+        """Trata exceções gerais"""
         logger.error(
-            f"未处理的异常: {exc}\n"
-            f"请求路径: {request.url.path}\n"
-            f"堆栈: {traceback.format_exc()}"
+            f"Exceção não tratada: {exc}\n"
+            f"Caminho da requisição: {request.url.path}\n"
+            f"Pilha de execução: {traceback.format_exc()}"
         )
         return JSONResponse(
             status_code=500,
             content={
                 "error": "internal_error",
-                "message": "服务器内部错误",
+                "message": "Erro interno do servidor",
                 "detail": None
             }
         )

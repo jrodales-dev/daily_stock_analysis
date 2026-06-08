@@ -1415,6 +1415,20 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "warning_codes": [],
     },
     # ------------------------------------------------------------------
+    "WEB_AUTO_PUSH_ENABLED": {
+        "title": "Web Auto Push",
+        "description": "Automatically send push notifications when an analysis is triggered from the Web UI.",
+        "category": "notification",
+        "data_type": "boolean",
+        "ui_control": "switch",
+        "is_sensitive": False,
+        "is_required": False,
+        "is_editable": True,
+        "default_value": "true",
+        "options": [],
+        "validation": {},
+        "display_order": 999,
+    },
     # Notification – Feishu
     # ------------------------------------------------------------------
     "FEISHU_WEBHOOK_URL": {
@@ -2876,16 +2890,16 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "MARKET_REVIEW_REGION": {
         "title": "Market Review Region",
-        "description": "Market region for review: cn (A-shares), hk (Hong Kong), us (US stocks), or both (all markets).",
+        "description": "Market region for review: cn (A-shares), hk (Hong Kong), us (US stocks), or combinations.",
         "category": "system",
         "data_type": "string",
-        "ui_control": "select",
+        "ui_control": "checkbox-group",
         "is_sensitive": False,
         "is_required": False,
         "is_editable": True,
         "default_value": "cn",
-        "options": ["cn", "hk", "us", "both"],
-        "validation": {"enum": ["cn", "hk", "us", "both"]},
+        "options": ["cn", "hk", "us"],
+        "validation": {},
         "display_order": 47,
         "help_key": "settings.system.market_review",
         "examples": [

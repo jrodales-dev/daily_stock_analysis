@@ -83,9 +83,36 @@ function renderFieldControl(
           onChange={onChange}
           options={normalizeSelectOptions(item.key, schema.options)}
           disabled={disabled || !schema.isEditable}
-          placeholder="请选择"
+          placeholder="Selecione"
         />
       );
+  }
+
+  if (controlType === 'checkbox-group' && schema?.options?.length) {
+    const values = value.split(',').map((v) => v.trim()).filter(Boolean);
+    const toggleValue = (optionValue: string) => {
+      const nextValues = values.includes(optionValue)
+        ? values.filter((v) => v !== optionValue)
+        : [...values, optionValue];
+      onChange(nextValues.join(','));
+    };
+
+    return (
+      <div className="flex flex-wrap gap-5 py-2">
+        {normalizeSelectOptions(item.key, schema.options).map((option) => (
+          <label key={option.value} className="inline-flex cursor-pointer items-center gap-2">
+            <input
+              type="checkbox"
+              checked={values.includes(option.value)}
+              disabled={disabled || !schema.isEditable}
+              onChange={() => toggleValue(option.value)}
+              className="h-4 w-4 rounded border-secondary text-primary focus:ring-primary/50 bg-background/50"
+            />
+            <span className="text-sm text-foreground">{option.label}</span>
+          </label>
+        ))}
+      </div>
+    );
   }
 
   if (controlType === 'switch') {
@@ -99,7 +126,7 @@ function renderFieldControl(
           disabled={disabled || !schema?.isEditable}
           onChange={(event) => onChange(event.target.checked ? 'true' : 'false')}
         />
-        <span className="text-sm text-secondary-text">{checked ? '已启用' : '未启用'}</span>
+        <span className="text-sm text-secondary-text">{checked ? 'Ativado' : 'Desativado'}</span>
       </label>
     );
   }
@@ -142,7 +169,7 @@ function renderFieldControl(
                   onChange(serializeMultiValues(nextValues.length ? nextValues : ['']));
                 }}
               >
-                删除
+                Excluir
               </Button>
             </div>
           ))}
@@ -156,7 +183,7 @@ function renderFieldControl(
               disabled={disabled || !schema?.isEditable}
               onClick={() => onChange(serializeMultiValues([...values, '']))}
             >
-              添加 Key
+              Acoplar uma Key
             </Button>
           </div>
         </div>
@@ -227,12 +254,12 @@ export const SettingsField: React.FC<SettingsFieldProps> = ({
         />
         {schema?.isSensitive ? (
           <Badge variant="history" size="sm">
-            敏感
+            SENSÍVEL
           </Badge>
         ) : null}
         {!schema?.isEditable ? (
           <Badge variant="default" size="sm">
-            只读
+            Somente Leitura
           </Badge>
         ) : null}
       </div>
@@ -257,8 +284,8 @@ export const SettingsField: React.FC<SettingsFieldProps> = ({
 
       {schema?.isSensitive ? (
         <p className="mt-3 text-[11px] leading-5 text-secondary-text">
-          敏感内容默认隐藏，可点击眼睛图标查看明文。
-          {isMultiValue ? ' 支持添加多个输入框进行增删。' : ''}
+            SENSÍVEL conteúdo oculto por padrão. Clique no ícone de olho para exibir o texto original.
+          {isMultiValue ? ' Comporte Diversos Elementos Em Linha Múltipla. ' : ''}
         </p>
       ) : null}
 

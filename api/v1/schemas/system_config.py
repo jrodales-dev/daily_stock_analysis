@@ -47,7 +47,7 @@ class SystemConfigFieldSchema(BaseModel):
     description: Optional[str] = Field(None, description="Field description")
     category: Literal["base", "data_source", "ai_model", "notification", "system", "agent", "backtest", "uncategorized"]
     data_type: Literal["string", "integer", "number", "boolean", "array", "json", "time"]
-    ui_control: Literal["text", "password", "number", "select", "textarea", "switch", "time"]
+    ui_control: Literal["text", "password", "number", "select", "textarea", "switch", "time", "checkbox-group"]
     is_sensitive: bool
     is_required: bool
     is_editable: bool
@@ -250,8 +250,8 @@ class TestNotificationChannelRequest(BaseModel):
     channel: NotificationTestChannel
     items: List[SystemConfigUpdateItem] = Field(default_factory=list)
     mask_token: str = "******"
-    title: str = Field(default="DSA 通知测试", min_length=1, max_length=80)
-    content: str = Field(default="这是一条来自 DSA Web 设置页的通知测试消息。", min_length=1, max_length=1000)
+    title: str = Field(default="Teste de Notificação DSA", min_length=1, max_length=80)
+    content: str = Field(default="Esta é uma mensagem de teste de notificação da página de configurações Web do DSA.", min_length=1, max_length=1000)
     timeout_seconds: float = Field(default=20.0, ge=1.0, le=120.0)
 
 

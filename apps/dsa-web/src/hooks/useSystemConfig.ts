@@ -290,8 +290,8 @@ export function useSystemConfig() {
 
   const save = useCallback(async (): Promise<SaveResult> => {
     if (!hasDirty) {
-      setToast({ type: 'success', message: '当前没有可保存的修改。' });
-      return { success: true, message: '当前没有可保存的修改' };
+      setToast({ type: 'success', message: 'Nenhuma alteração a salvar.' });
+      return { success: true, message: 'Sem modificações' };
     }
 
     setIsSaving(true);
@@ -306,15 +306,15 @@ export function useSystemConfig() {
 
       if (!validateResult.valid) {
         setSaveError(createParsedApiError({
-          title: '配置校验未通过',
-          message: '请先修正表单错误后再保存。',
-          rawMessage: '配置校验未通过，请先修正表单错误。',
+          title: 'Validação de Configuração Falhou',
+          message: 'Corrija os erros no formulário antes de salvar.',
+          rawMessage: 'Configuração inválida. Corrija antes de aplicar.',
           category: 'http_error',
         }));
         setRetryAction('save');
         return {
           success: false,
-          message: '配置校验未通过',
+          message: 'Validação Falhou',
           issues: validateResult.issues,
         };
       }
@@ -330,9 +330,9 @@ export function useSystemConfig() {
       applyServerPayload(refreshed.items, refreshed.configVersion, refreshed.maskToken);
 
       const warningText = updateResult.warnings?.length
-        ? `；警告：${updateResult.warnings.join('；')}`
+        ? `；Avisos：${updateResult.warnings.join('；')}`
         : '';
-      setToast({ type: 'success', message: `配置已更新${warningText}` });
+      setToast({ type: 'success', message: `Configurações Atualizadas${warningText}` });
       return { success: true };
     } catch (error: unknown) {
       if (error instanceof SystemConfigValidationError) {
@@ -340,8 +340,8 @@ export function useSystemConfig() {
         setSaveError(error.parsedError);
       } else if (error instanceof SystemConfigConflictError) {
         setSaveError(createParsedApiError({
-          title: '配置版本冲突',
-          message: `${error.message}，请先重新加载配置。`,
+          title: 'Conflito de Versão da Configuração',
+          message: `${error.message}，Você terá que Recarregar para isso.` ,
           rawMessage: error.parsedError.rawMessage,
           status: error.parsedError.status,
           category: error.parsedError.category,
@@ -352,7 +352,7 @@ export function useSystemConfig() {
 
       setToast({ type: 'error', error: getParsedApiError(error) });
       setRetryAction('save');
-      return { success: false, message: '保存失败' };
+      return { success: false, message: 'Falha ao Salvar.' };
     } finally {
       setIsSaving(false);
     }

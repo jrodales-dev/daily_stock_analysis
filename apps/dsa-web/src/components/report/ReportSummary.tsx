@@ -6,7 +6,7 @@ import { ReportNews } from './ReportNews';
 import { ReportDetails } from './ReportDetails';
 import { ReportDiagnostics } from './ReportDiagnostics';
 import { AnalysisContextSummary } from './AnalysisContextSummary';
-import { getReportText, normalizeReportLanguage } from '../../utils/reportLanguage';
+import { normalizeReportLanguage } from '../../utils/reportLanguage';
 
 interface ReportSummaryProps {
   data: AnalysisResult | AnalysisReport;
@@ -14,30 +14,25 @@ interface ReportSummaryProps {
 }
 
 /**
- * 完整报告展示组件
- * 按主体内容优先、透明度信息后置的顺序展示报告。
+ * Componente Completo de Apresentação de Relatório
+ * Mostra os resultados pela prioridade, da mais alta a transparência.
  */
 export const ReportSummary: React.FC<ReportSummaryProps> = ({
   data,
   isHistory = false,
 }) => {
-  // 兼容 AnalysisResult 和 AnalysisReport 两种数据格式
+  // Suporta formatos AnalysisResult e AnalysisReport
   const report: AnalysisReport = 'report' in data ? data.report : data;
-  // 使用 report id，因为 queryId 在批量分析时可能重复，且历史报告详情接口需要 recordId 来获取关联资讯和详情数据
+  // O id do Relatório tem de ser utilizado para evitar duplicidade de IDs
   const recordId = report.meta.id;
   const diagnosticSummary = 'diagnosticSummary' in data ? data.diagnosticSummary : undefined;
 
   const { meta, summary, strategy, details } = report;
   const reportLanguage = normalizeReportLanguage(meta.reportLanguage);
-  const text = getReportText(reportLanguage);
-  const modelUsed = (meta.modelUsed || '').trim();
-  const shouldShowModel = Boolean(
-    modelUsed && !['unknown', 'error', 'none', 'null', 'n/a'].includes(modelUsed.toLowerCase()),
-  );
 
   return (
-    <div className="space-y-5 pb-8 animate-fade-in">
-      {/* 概览区（首屏） */}
+    <div className="flex flex-col flex-1 space-y-5 pb-0 animate-fade-in">
+      {/* Visão Geral (Tela Inicial) */}
       <ReportOverview
         meta={meta}
         summary={summary}
@@ -45,34 +40,30 @@ export const ReportSummary: React.FC<ReportSummaryProps> = ({
         isHistory={isHistory}
       />
 
-      {/* 策略点位区 */}
+      {/* Área de Estratégias */}
       <ReportStrategy strategy={strategy} language={reportLanguage} />
 
-      {/* 资讯区 */}
+      {/* Área de Informações/Notícias */}
       <ReportNews recordId={recordId} limit={8} language={reportLanguage} />
 
-      {/* 输入数据块低敏摘要 */}
+      {/* Resumo não sensível */}
       <AnalysisContextSummary
         overview={details?.analysisContextPackOverview}
         language={reportLanguage}
       />
 
-      {/* 运行诊断摘要 */}
+      {/* Resumo do diagnóstico */}
       <ReportDiagnostics
         recordId={recordId}
         summary={diagnosticSummary}
         language={reportLanguage}
       />
 
-      {/* 透明度与追溯区 */}
-      <ReportDetails details={details} recordId={recordId} language={reportLanguage} />
+      {/* Rastreabilidade e Transparência */}
+      <div className="mt-auto">
+        <ReportDetails details={details} recordId={recordId} language={reportLanguage} />
+      </div>
 
-      {/* 分析模型标记（Issue #528）— 报告末尾 */}
-      {shouldShowModel && (
-        <p className="px-1 text-xs text-muted-text">
-          {text.analysisModel}: {modelUsed}
-        </p>
-      )}
     </div>
   );
 };

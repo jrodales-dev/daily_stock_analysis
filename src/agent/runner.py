@@ -574,7 +574,7 @@ def run_agent_loop(
                 total_tokens,
             )
             if progress_callback:
-                progress_callback({"type": "generating", "step": step + 1, "message": "正在生成最终分析..."})
+                progress_callback({"type": "generating", "step": step + 1, "message": "Gerando análise final..."})
 
             final_content = response.content or ""
             is_error = response.provider == "error"

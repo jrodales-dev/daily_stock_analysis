@@ -24,31 +24,31 @@ function pct(value?: number | null): string {
 }
 
 const OUTCOME_LABELS: Record<string, string> = {
-  win: '盈利',
-  loss: '亏损',
-  neutral: '中性',
+  win: 'Win',
+  loss: 'Loss',
+  neutral: 'Neutral',
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  completed: '已完成',
-  insufficient: '数据不足',
-  insufficient_data: '数据不足',
-  error: '错误',
+  completed: 'Completed',
+  insufficient: 'Insufficient Data',
+  insufficient_data: 'Insufficient Data',
+  error: 'Error',
 };
 
 const MOVEMENT_LABELS: Record<string, string> = {
-  up: '上涨',
-  down: '下跌',
-  flat: '持平',
+  up: 'Up',
+  down: 'Down',
+  flat: 'Flat',
 };
 
 const DIRECTION_EXPECTED_LABELS: Record<string, string> = {
-  long: '做多',
-  cash: '空仓',
-  up: '看涨',
-  down: '看跌',
-  not_down: '不看跌',
-  flat: '持平',
+  long: 'Long',
+  cash: 'Cash',
+  up: 'Bullish',
+  down: 'Bearish',
+  not_down: 'Not Bearish',
+  flat: 'Flat',
 };
 
 function labelFromMap(value: string | null | undefined, labels: Record<string, string>): string {
@@ -102,7 +102,7 @@ function boolIcon(value?: boolean | null) {
     return (
       <span
         className="backtest-status-chip backtest-status-chip-success"
-        aria-label="是"
+        aria-label="Yes"
       >
         <StatusDot tone="success" className="backtest-status-chip-dot" />
         <Check className="h-3.5 w-3.5" />
@@ -114,7 +114,7 @@ function boolIcon(value?: boolean | null) {
     return (
       <span
         className="backtest-status-chip backtest-status-chip-danger"
-        aria-label="否"
+        aria-label="No"
       >
         <StatusDot tone="danger" className="backtest-status-chip-dot" />
         <X className="h-3.5 w-3.5" />
@@ -125,7 +125,7 @@ function boolIcon(value?: boolean | null) {
   return (
     <span
       className="backtest-status-chip backtest-status-chip-neutral"
-      aria-label="未知"
+      aria-label="Unknown"
     >
       <StatusDot tone="neutral" className="backtest-status-chip-dot" />
       <Minus className="h-3.5 w-3.5" />
@@ -149,21 +149,21 @@ const PerformanceCard: React.FC<{ metrics: PerformanceMetrics; title: string }> 
     <div className="mb-3">
       <span className="label-uppercase">{title}</span>
     </div>
-    <MetricRow label="方向准确率" value={pct(metrics.directionAccuracyPct)} accent />
-    <MetricRow label="胜率" value={pct(metrics.winRatePct)} accent />
-    <MetricRow label="平均模拟收益" value={pct(metrics.avgSimulatedReturnPct)} />
-    <MetricRow label="平均个股收益" value={pct(metrics.avgStockReturnPct)} />
-    <MetricRow label="止损触发率" value={pct(metrics.stopLossTriggerRate)} />
-    <MetricRow label="止盈触发率" value={pct(metrics.takeProfitTriggerRate)} />
-    <MetricRow label="平均命中天数" value={metrics.avgDaysToFirstHit != null ? metrics.avgDaysToFirstHit.toFixed(1) : '--'} />
+    <MetricRow label="Direction Accuracy" value={pct(metrics.directionAccuracyPct)} accent />
+    <MetricRow label="Win Rate" value={pct(metrics.winRatePct)} accent />
+    <MetricRow label="Avg Simulated Return" value={pct(metrics.avgSimulatedReturnPct)} />
+    <MetricRow label="Avg Stock Return" value={pct(metrics.avgStockReturnPct)} />
+    <MetricRow label="Stop Loss Rate" value={pct(metrics.stopLossTriggerRate)} />
+    <MetricRow label="Take Profit Rate" value={pct(metrics.takeProfitTriggerRate)} />
+    <MetricRow label="Avg Days to Hit" value={metrics.avgDaysToFirstHit != null ? metrics.avgDaysToFirstHit.toFixed(1) : '--'} />
     <div className="backtest-metric-footer">
-      <span className="text-xs text-muted-text">评估数</span>
+      <span className="text-xs text-muted-text">Evaluations</span>
       <span className="text-xs text-secondary-text font-mono">
         {Number(metrics.completedCount)} / {Number(metrics.totalEvaluations)}
       </span>
     </div>
     <div className="flex items-center justify-between">
-      <span className="text-xs text-muted-text">盈 / 亏 / 中</span>
+      <span className="text-xs text-muted-text">Win / Loss / Neutral</span>
       <span className="text-xs font-mono">
         <span className="text-success">{metrics.winCount}</span>
         {' / '}
@@ -179,12 +179,12 @@ const PerformanceCard: React.FC<{ metrics: PerformanceMetrics; title: string }> 
 
 const RunSummary: React.FC<{ data: BacktestRunResponse }> = ({ data }) => (
   <div className="backtest-summary animate-fade-in">
-    <span className="label">已处理: <span className="value">{data.processed}</span></span>
-    <span className="label">已保存: <span className="value primary">{data.saved}</span></span>
-    <span className="label">已完成: <span className="value success">{data.completed}</span></span>
-    <span className="label">数据不足: <span className="value warning">{data.insufficient}</span></span>
+    <span className="label">Processed: <span className="value">{data.processed}</span></span>
+    <span className="label">Saved: <span className="value primary">{data.saved}</span></span>
+    <span className="label">Completed: <span className="value success">{data.completed}</span></span>
+    <span className="label">Insufficient: <span className="value warning">{data.insufficient}</span></span>
     {data.errors > 0 && (
-      <span className="label">错误: <span className="value danger">{data.errors}</span></span>
+      <span className="label">Error: <span className="value danger">{data.errors}</span></span>
     )}
   </div>
 );
@@ -194,7 +194,7 @@ const RunSummary: React.FC<{ data: BacktestRunResponse }> = ({ data }) => (
 const BacktestPage: React.FC = () => {
   // Set page title
   useEffect(() => {
-    document.title = '策略回测 - DSA';
+    document.title = 'Strategy Backtest - DSA';
   }, []);
 
   // Input state
@@ -370,7 +370,7 @@ const BacktestPage: React.FC = () => {
               value={codeFilter}
               onChange={(e) => setCodeFilter(e.target.value.toUpperCase())}
               onKeyDown={handleKeyDown}
-              placeholder="按股票代码筛选（留空表示全部）"
+              placeholder="Filter by symbol (leave empty for all)"
               disabled={isRunning}
               className={BACKTEST_INPUT_CLASS}
             />
@@ -381,10 +381,10 @@ const BacktestPage: React.FC = () => {
             disabled={isLoadingResults}
             className="btn-secondary flex items-center gap-1.5 whitespace-nowrap"
           >
-            筛选
+            Filter
           </button>
           <div className="flex items-center gap-2 whitespace-nowrap lg:w-40 lg:justify-between">
-            <span className="text-xs text-muted-text">评估窗口</span>
+            <span className="text-xs text-muted-text">Eval Window</span>
             <input
               type="number"
               min={1}
@@ -397,10 +397,10 @@ const BacktestPage: React.FC = () => {
             />
           </div>
           <div className="flex items-center gap-2 whitespace-nowrap">
-            <span className="text-xs text-muted-text">开始日期</span>
+            <span className="text-xs text-muted-text">Start Date</span>
             <input
               type="date"
-              aria-label="分析开始日期"
+              aria-label="Analysis start date"
               value={analysisDateFrom}
               onChange={(e) => setAnalysisDateFrom(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -409,10 +409,10 @@ const BacktestPage: React.FC = () => {
             />
           </div>
           <div className="flex items-center gap-2 whitespace-nowrap">
-            <span className="text-xs text-muted-text">结束日期</span>
+            <span className="text-xs text-muted-text">End Date</span>
             <input
               type="date"
-              aria-label="分析结束日期"
+              aria-label="Analysis end date"
               value={analysisDateTo}
               onChange={(e) => setAnalysisDateTo(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -427,7 +427,7 @@ const BacktestPage: React.FC = () => {
             className={`backtest-force-btn ${isNextDayValidation ? 'active' : ''}`}
           >
             <span className="dot" />
-            1 日验证
+            1-Day Validate
           </button>
           <button
             type="button"
@@ -436,7 +436,7 @@ const BacktestPage: React.FC = () => {
             className={`backtest-force-btn ${forceRerun ? 'active' : ''}`}
           >
             <span className="dot" />
-            强制重跑
+            Force Rerun
           </button>
           <button
             type="button"
@@ -450,10 +450,10 @@ const BacktestPage: React.FC = () => {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
-                回测中...
+                Running...
               </>
             ) : (
-              '运行回测'
+              'Run Backtest'
             )}
           </button>
         </div>
@@ -467,8 +467,8 @@ const BacktestPage: React.FC = () => {
         )}
         <p className="mt-2 text-xs text-muted-text">
           {isNextDayValidation
-            ? '1 日验证模式会用下一个交易日收盘表现校验 AI 预测。'
-            : '将评估窗口设为 1，可查看 AI 预测与下一个交易日收盘表现的匹配情况。'}
+            ? "1-Day validation uses the next trading day's close to verify AI predictions."
+            : "Set Eval Window to 1 to view the match between AI predictions and next day's close."}
         </p>
       </header>
 
@@ -481,11 +481,11 @@ const BacktestPage: React.FC = () => {
               <div className="backtest-spinner sm" />
             </div>
           ) : overallPerf ? (
-            <PerformanceCard metrics={overallPerf} title="整体表现" />
+            <PerformanceCard metrics={overallPerf} title="Overall Performance" />
           ) : (
             <EmptyState
-              title="暂无指标"
-              description="运行回测后会生成组合级表现指标。"
+              title="No Metrics"
+              description="Run backtest to generate portfolio-level metrics."
               className="h-full min-h-[12rem] border-dashed bg-card/45 shadow-none"
             />
           )}
@@ -503,12 +503,12 @@ const BacktestPage: React.FC = () => {
           {isLoadingResults ? (
             <div className="flex flex-col items-center justify-center h-64">
               <div className="backtest-spinner md" />
-              <p className="mt-3 text-secondary-text text-sm">正在加载结果...</p>
+              <p className="mt-3 text-secondary-text text-sm">Loading results...</p>
             </div>
           ) : results.length === 0 ? (
             <EmptyState
-              title="暂无结果"
-              description="运行回测后可评估历史分析准确性。"
+              title="No Results"
+              description="Run backtest to evaluate historical analysis accuracy."
               className="backtest-empty-state border-dashed"
               icon={(
                 <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -520,31 +520,31 @@ const BacktestPage: React.FC = () => {
             <div className="animate-fade-in">
               <div className="backtest-table-toolbar">
                 <div className="backtest-table-toolbar-meta">
-                  <span className="label-uppercase">{isNextDayValidation ? '次日验证' : '结果集'}</span>
+                  <span className="label-uppercase">{isNextDayValidation ? 'Next-Day Validation' : 'Result Set'}</span>
                   <span className="text-xs text-secondary-text">
-                    {codeFilter.trim() ? `筛选 ${codeFilter.trim()}` : '全部股票'}
-                    {evalDays ? ` · ${evalDays} 日窗口` : ''}
-                    {analysisDateFrom ? ` · 自 ${analysisDateFrom}` : ''}
-                    {analysisDateTo ? ` · 至 ${analysisDateTo}` : ''}
+                    {codeFilter.trim() ? `Filter ${codeFilter.trim()}` : 'All Stocks'}
+                    {evalDays ? ` · ${evalDays}-Day Window` : ''}
+                    {analysisDateFrom ? ` · From ${analysisDateFrom}` : ''}
+                    {analysisDateTo ? ` · To ${analysisDateTo}` : ''}
                   </span>
                 </div>
-                <span className="backtest-table-scroll-hint">小屏幕可横向滚动</span>
+                <span className="backtest-table-scroll-hint">Scroll horizontally on small screens</span>
               </div>
               <div className="backtest-table-wrapper">
                 <table className="backtest-table min-w-[840px] w-full text-sm">
                   <thead className="backtest-table-head">
                     <tr className="text-left">
-                      <th className="backtest-table-head-cell">股票</th>
-                      <th className="backtest-table-head-cell">分析日期</th>
-                      <th className="backtest-table-head-cell">AI 预测</th>
+                      <th className="backtest-table-head-cell">Stock</th>
+                      <th className="backtest-table-head-cell">Analysis Date</th>
+                      <th className="backtest-table-head-cell">AI Prediction</th>
                       <th className="backtest-table-head-cell">
-                        {showNextDayActualColumns ? '实际表现' : '窗口收益'}
+                        {showNextDayActualColumns ? 'Actual Return' : 'Window Return'}
                       </th>
                       <th className="backtest-table-head-cell">
-                        {showNextDayActualColumns ? '准确性' : '方向匹配'}
+                        {showNextDayActualColumns ? 'Accuracy' : 'Direction Match'}
                       </th>
-                      <th className="backtest-table-head-cell">结果</th>
-                      <th className="backtest-table-head-cell">状态</th>
+                      <th className="backtest-table-head-cell">Result</th>
+                      <th className="backtest-table-head-cell">Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -613,7 +613,7 @@ const BacktestPage: React.FC = () => {
               </div>
 
               <p className="text-xs text-muted-text text-center mt-2">
-                共 {totalResults} 条结果 · 第 {currentPage} / {Math.max(totalPages, 1)} 页
+                {totalResults} Results · Page {currentPage} of {Math.max(totalPages, 1)}
               </p>
             </div>
           )}

@@ -35,7 +35,7 @@ const StrategyItem: React.FC<StrategyItemProps> = ({
 );
 
 /**
- * 策略点位区组件 - 终端风格
+ * Componente de Pontos de Estratégia
  */
 export const ReportStrategy: React.FC<ReportStrategyProps> = ({ strategy, language = 'zh' }) => {
   if (!strategy) {
@@ -71,7 +71,6 @@ export const ReportStrategy: React.FC<ReportStrategyProps> = ({ strategy, langua
   return (
     <Card variant="bordered" padding="md" className="home-panel-card">
       <DashboardPanelHeader
-        eyebrow={text.strategyPoints}
         title={text.sniperLevels}
         className="mb-3"
       />

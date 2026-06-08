@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-股票智能分析系统 - 大盘复盘模块（支持 A 股 / 港股 / 美股）
+Sistema de Análise Inteligente de Ações - Módulo de Revisão de Mercado (Suporte a Ações A / HK / EUA)
 ===================================
 
-职责：
-1. 根据 MARKET_REVIEW_REGION 配置选择市场区域（cn / hk / us / both）
-2. 执行大盘复盘分析并生成复盘报告
-3. 保存和发送复盘报告
+Responsabilidades:
+1. Selecionar região do mercado baseada na configuração MARKET_REVIEW_REGION (cn / hk / us / both)
+2. Executar análise e gerar relatório de revisão de mercado
+3. Salvar e enviar o relatório de revisão de mercado
 """
 
 import logging
@@ -28,9 +28,9 @@ logger = logging.getLogger(__name__)
 MARKET_REVIEW_HISTORY_CODE = "MARKET"
 MARKET_REVIEW_REPORT_TYPE = "market_review"
 _MARKET_REVIEW_MARKETS = (
-    ('cn', 'cn_title', 'A 股'),
-    ('hk', 'hk_title', '港股'),
-    ('us', 'us_title', '美股'),
+    ('cn', 'cn_title', 'Ações A'),
+    ('hk', 'hk_title', 'Ações de HK'),
+    ('us', 'us_title', 'Ações dos EUA'),
 )
 _MARKET_REVIEW_REGION_ORDER = tuple(market for market, _, _ in _MARKET_REVIEW_MARKETS)
 _VALID_MARKET_REVIEW_REGIONS = frozenset(_MARKET_REVIEW_REGION_ORDER)
@@ -47,20 +47,29 @@ def _get_market_review_text(language: str) -> dict[str, str]:
             "hk_title": "# HK Market Recap",
             "separator": "> Next market recap follows",
         }
+    if normalized == "pt":
+        return {
+            "root_title": "# 🎯 Revisão do Mercado",
+            "push_title": "🎯 Revisão do Mercado",
+            "cn_title": "# Revisão do Mercado de Ações A",
+            "us_title": "# Revisão do Mercado Americano",
+            "hk_title": "# Revisão do Mercado de Hong Kong",
+            "separator": "> A seguir, revisão do próximo mercado",
+        }
     return {
-        "root_title": "# 🎯 大盘复盘",
-        "push_title": "🎯 大盘复盘",
-        "cn_title": "# A股大盘复盘",
-        "us_title": "# 美股大盘复盘",
-        "hk_title": "# 港股大盘复盘",
-        "separator": "> 以下为下一市场大盘复盘",
+        "root_title": "# 🎯 Revisão do Mercado",
+        "push_title": "🎯 Revisão do Mercado",
+        "cn_title": "# Revisão do Mercado de Ações A",
+        "us_title": "# Revisão do Mercado Americano",
+        "hk_title": "# Revisão do Mercado de Hong Kong",
+        "separator": "> A seguir, revisão do próximo mercado",
     }
 
 
 def _resolve_market_review_regions(raw_region: Optional[str]) -> list[str]:
     """Normalize MARKET_REVIEW_REGION into an ordered, non-empty region list."""
 
-    region = str(raw_region or 'cn').strip().lower()
+    region = (raw_region or 'cn').strip().lower()
     if region == 'both':
         return list(_MARKET_REVIEW_REGION_ORDER)
     if ',' in region:
@@ -85,21 +94,21 @@ def run_market_review(
     query_id: Optional[str] = None,
 ) -> Optional[str]:
     """
-    执行大盘复盘分析
+    Executa a análise da revisão de mercado
 
     Args:
-        notifier: 通知服务
-        analyzer: AI分析器（可选）
-        search_service: 搜索服务（可选）
-        send_notification: 是否发送通知
-        merge_notification: 是否合并推送（跳过本次推送，由 main 层合并个股+大盘后统一发送，Issue #190）
-        override_region: 覆盖 config 的 market_review_region（Issue #373 交易日过滤后有效子集）
-        query_id: 历史记录关联 ID；API 后台任务会传入 task_id，CLI/Bot 为空时自动生成
+        notifier: Serviço de notificação
+        analyzer: Analisador de IA (opcional)
+        search_service: Serviço de pesquisa (opcional)
+        send_notification: Se deve enviar notificação
+        merge_notification: Se deve mesclar notificações (ignorar notificação atual e enviar tudo pela camada principal, Issue #190)
+        override_region: Sobrescreve a market_review_region configurada (Issue #373)
+        query_id: ID do histórico associado; API fornece task_id, gerado automaticamente para CLI/Bot se vazio
 
     Returns:
-        复盘报告文本
+        Texto do relatório da revisão de mercado
     """
-    logger.info("开始执行大盘复盘分析...")
+    logger.info("Iniciando análise de revisão do mercado...")
     config = get_config()
     review_text = _get_market_review_text(getattr(config, "report_language", "zh"))
     raw_region = (
@@ -112,13 +121,13 @@ def run_market_review(
 
     try:
         if len(run_markets) > 1:
-            # 多市场顺序执行，合并报告
+            # Execução sequencial multi-mercado, mesclando relatórios
             parts = []
             market_light_snapshots: Dict[str, Dict[str, Any]] = {}
             for mkt, title_key, label in _MARKET_REVIEW_MARKETS:
                 if mkt not in run_markets:
                     continue
-                logger.info("生成 %s 大盘复盘报告...", label)
+                logger.info("Gerando relatório de revisão do mercado para %s...", label)
                 mkt_analyzer = MarketAnalyzer(
                     search_service=search_service, analyzer=analyzer, region=mkt
                 )
@@ -143,14 +152,14 @@ def run_market_review(
             market_light_snapshots = {run_region: review_result.market_light_snapshot}
         
         if review_report:
-            # 保存报告到文件
+            # Salvar relatório em arquivo
             date_str = datetime.now().strftime('%Y%m%d')
             report_filename = f"market_review_{date_str}.md"
             filepath = notifier.save_report_to_file(
                 f"{review_text['root_title']}\n\n{review_report}",
                 report_filename
             )
-            logger.info(f"大盘复盘报告已保存: {filepath}")
+            logger.info(f"Relatório de revisão do mercado salvo: {filepath}")
 
             _persist_market_review_history(
                 review_report=review_report,
@@ -161,25 +170,25 @@ def run_market_review(
                 market_light_snapshots=market_light_snapshots,
             )
             
-            # 推送通知（合并模式下跳过，由 main 层统一发送）
+            # Enviar notificação (ignorado no modo de mesclagem, enviado pela camada main)
             if merge_notification and send_notification:
-                logger.info("合并推送模式：跳过大盘复盘单独推送，将在个股+大盘复盘后统一发送")
+                logger.info("Modo de mesclagem de notificação: pulando notificação individual da revisão do mercado, será enviada após a revisão da ação+mercado")
             elif send_notification and notifier.is_available():
-                # 添加标题
+                # Adicionar título
                 report_content = f"{review_text['push_title']}\n\n{review_report}"
 
                 success = notifier.send(report_content, email_send_to_all=True, route_type="report")
                 if success:
-                    logger.info("大盘复盘推送成功")
+                    logger.info("Notificação da revisão de mercado enviada com sucesso")
                 else:
-                    logger.warning("大盘复盘推送失败")
+                    logger.warning("Falha ao enviar notificação da revisão de mercado")
             elif not send_notification:
-                logger.info("已跳过推送通知 (--no-notify)")
+                logger.info("Notificações puladas (--no-notify)")
             
             return review_report
         
     except Exception as e:
-        logger.error(f"大盘复盘分析失败: {e}")
+        logger.error(f"Falha na análise da revisão do mercado: {e}")
     
     return None
 
@@ -203,10 +212,14 @@ def _persist_market_review_history(
             stock_name = "Market Review"
             operation_advice = "View review"
             trend_prediction = "Market review"
+        elif report_language == "pt":
+            stock_name = "Revisão do Mercado"
+            operation_advice = "Ver revisão"
+            trend_prediction = "Revisão do mercado"
         else:
-            stock_name = "大盘复盘"
-            operation_advice = "查看复盘"
-            trend_prediction = "大盘复盘"
+            stock_name = "Revisão do Mercado"
+            operation_advice = "Ver revisão"
+            trend_prediction = "Revisão do mercado"
 
         result = AnalysisResult(
             code=MARKET_REVIEW_HISTORY_CODE,
@@ -222,7 +235,7 @@ def _persist_market_review_history(
         )
 
         history_query_id = query_id or f"market_review_{uuid.uuid4().hex}"
-        context_snapshot = {
+        context_snapshot: dict[str, Any] = {
             "report_kind": MARKET_REVIEW_REPORT_TYPE,
             "market_review_region": region,
             "report_language": report_language,
@@ -239,12 +252,12 @@ def _persist_market_review_history(
             save_snapshot=True,
         )
         if saved:
-            logger.info("大盘复盘历史记录已保存: query_id=%s", history_query_id)
+            logger.info("Histórico da revisão de mercado salvo: query_id=%s", history_query_id)
         else:
-            logger.warning("大盘复盘历史记录保存失败: query_id=%s", history_query_id)
+            logger.warning("Falha ao salvar histórico da revisão de mercado: query_id=%s", history_query_id)
         return saved
     except Exception as exc:
-        logger.warning("大盘复盘历史记录保存异常，报告文件与推送流程继续: %s", exc, exc_info=True)
+        logger.warning("Exceção ao salvar histórico da revisão de mercado, fluxo do relatório e notificação continuam: %s", exc, exc_info=True)
         return 0
 
 
@@ -253,4 +266,8 @@ def _summarize_market_review(review_report: str, report_language: str) -> str:
         text = line.strip().lstrip("#").strip()
         if text and not text.startswith("---") and not text.startswith(">"):
             return text[:200]
-    return "Market review report generated." if report_language == "en" else "大盘复盘报告已生成。"
+    if report_language == "en":
+        return "Market review report generated."
+    if report_language == "pt":
+        return "Relatório de revisão de mercado gerado."
+    return "Relatório de revisão de mercado gerado."

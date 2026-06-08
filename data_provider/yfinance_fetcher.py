@@ -712,6 +712,15 @@ class YfinanceFetcher(BaseFetcher):
                 volume = getattr(info, 'lastVolume', None) or getattr(info, 'last_volume', None)
                 market_cap = getattr(info, 'marketCap', None) or getattr(info, 'market_cap', None)
 
+                # Tenta buscar preMarketPrice / postMarketPrice via info (para fora de horário)
+                try:
+                    ext_info = ticker.info
+                    ext_price = ext_info.get("postMarketPrice") or ext_info.get("preMarketPrice")
+                    if ext_price is not None and ext_price > 0:
+                        price = ext_price
+                except Exception as e:
+                    logger.debug(f"[Yfinance] Falha ao tentar obter extended hours via info para {symbol}: {e}")
+
             except Exception:
                 # 回退到 history 方法获取最新数据
                 logger.debug("[Yfinance] fast_info 失败，尝试 history 方法")
@@ -730,6 +739,15 @@ class YfinanceFetcher(BaseFetcher):
                 low = float(today['Low'])
                 volume = int(today['Volume'])
                 market_cap = None
+                
+                # Para extended hours no fallback
+                try:
+                    ext_info = ticker.info
+                    ext_price = ext_info.get("postMarketPrice") or ext_info.get("preMarketPrice")
+                    if ext_price is not None and ext_price > 0:
+                        price = ext_price
+                except Exception:
+                    pass
 
             # 计算涨跌幅
             change_amount = None

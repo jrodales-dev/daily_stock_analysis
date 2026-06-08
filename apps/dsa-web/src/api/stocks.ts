@@ -12,6 +12,22 @@ export type ExtractFromImageResponse = {
   rawText?: string;
 };
 
+export type StockQuote = {
+  stockCode: string;
+  stockName?: string;
+  currentPrice: number;
+  change?: number;
+  changePercent?: number;
+  open?: number;
+  high?: number;
+  low?: number;
+  prevClose?: number;
+  volume?: number;
+  amount?: number;
+  updateTime?: string;
+  source?: string;
+};
+
 export const stocksApi = {
   async extractFromImage(file: File): Promise<ExtractFromImageResponse> {
     const formData = new FormData();
@@ -49,6 +65,27 @@ export const stocksApi = {
       const data = response.data as { codes?: string[]; items?: ExtractItem[] };
       return { codes: data.codes ?? [], items: data.items };
     }
-    throw new Error('请提供文件或粘贴文本');
+    throw new Error('Por favor, forneça um arquivo ou cole um texto');
+  },
+
+  async getQuote(stockCode: string): Promise<StockQuote> {
+    const response = await apiClient.get(`/api/v1/stocks/${encodeURIComponent(stockCode)}/quote`);
+    // Convert snake_case from backend to camelCase
+    const data = response.data as any;
+    return {
+      stockCode: data.stock_code,
+      stockName: data.stock_name,
+      currentPrice: data.current_price,
+      change: data.change,
+      changePercent: data.change_percent,
+      open: data.open,
+      high: data.high,
+      low: data.low,
+      prevClose: data.prev_close,
+      volume: data.volume,
+      amount: data.amount,
+      updateTime: data.update_time,
+      source: data.source,
+    };
   },
 };

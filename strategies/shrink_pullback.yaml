@@ -1,46 +1,30 @@
-# Shrink Volume Pullback Strategy / 缩量回踩
-# Volume shrinks during pullback to MA5/MA10, then price bounces.
-
 name: shrink_pullback
-display_name: 缩量回踩
-description: 检测缩量回踩均线支撑信号，趋势延续的理想入场点。
+display_name: Pullback c/ Baixo Vol
+description: Detecta recuo de preço até a média móvel com volume reduzido, um ponto
+  ideal de entrada.
 category: trend
-core_rules: [1, 2, 4]
+core_rules:
+  - 1
+  - 2
+  - 4
 required_tools:
   - get_daily_history
   - analyze_trend
   - get_realtime_quote
-aliases: [缩量回踩, 回踩]
+aliases:
+  - 缩量回踩
+  - 回踩
 default_router: true
 default_priority: 40
-market_regimes: [trending_down, sideways]
-
-instructions: |
-  **缩量回踩（Shrink Volume Pullback Strategy）**
-
-  入场判定标准：
-
-  1. **前提条件**（关联理念2：趋势交易）：
-     - 股票必须处于上升趋势（MA5 > MA10 > MA20）。
-     - 使用 `analyze_trend` 确认多头排列。
-
-  2. **回踩检测**（关联理念4：买点偏好）：
-     - 使用 `get_daily_history` 和 `get_realtime_quote`。
-     - 价格回踩至 MA5 附近（误差 1% 以内）或 MA10 附近（误差 2% 以内）。
-     - 回调期间成交量 < 5 日均量的 70%（缩量特征）。
-     - `analyze_trend` → volume_status 应显示缩量。
-
-  3. **反弹信号**（关联理念1：严进策略）：
-     - 当前价格守住均线支撑位。
-     - MA5 乖离率 < 2% — 最佳买入区间。
-
-  4. **确认条件**（关联理念5：风险排查）：
-     - `search_stock_news` 无利空消息。
-     - 筹码分布健康（获利比例 50-80%）。
-
-  评分调整：
-  - 缩量回踩 MA5：sentiment_score +10
-  - 缩量回踩 MA10 且量能 < 0.6 倍均量：sentiment_score +8
-  - 理想买点设在 MA5 水平，次优买点设在 MA10。
-  - 止损设在 MA20 水平。
-  - 在 `buy_reason` 中注明"缩量回踩"。
+market_regimes:
+  - trending_down
+  - sideways
+instructions: "**缩量回踩（Shrink Volume Pullback Strategy）**\n\n入场判定标准：\n\n1. **前提条件**（关联理念2：趋势交易）：\n\
+  \   - 股票必须处于上升趋势（MA5 > MA10 > MA20）。\n   - 使用 `analyze_trend` 确认多头排列。\n\n2. **回踩检测**（关联理念4：买点偏好）：\n\
+  \   - 使用 `get_daily_history` 和 `get_realtime_quote`。\n   - 价格回踩至 MA5 附近（误差 1% 以内）或\
+  \ MA10 附近（误差 2% 以内）。\n   - 回调期间成交量 < 5 日均量的 70%（缩量特征）。\n   - `analyze_trend` → volume_status\
+  \ 应显示缩量。\n\n3. **反弹信号**（关联理念1：严进策略）：\n   - 当前价格守住均线支撑位。\n   - MA5 乖离率 < 2% — 最佳买入区间。\n\
+  \n4. **确认条件**（关联理念5：风险排查）：\n   - `search_stock_news` 无利空消息。\n   - 筹码分布健康（获利比例 50-80%）。\n\
+  \n评分调整：\n- 缩量回踩 MA5：sentiment_score +10\n- 缩量回踩 MA10 且量能 < 0.6 倍均量：sentiment_score\
+  \ +8\n- 理想买点设在 MA5 水平，次优买点设在 MA10。\n- 止损设在 MA20 水平。\n- 在 `buy_reason` 中注明\"缩量回踩\"\
+  。\n"

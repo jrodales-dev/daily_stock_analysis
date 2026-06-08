@@ -1,6 +1,6 @@
 <div align="center">
 
-# 📈 股票智能分析系统
+# 📈 Daily Stock Analysis System
 
 [![GitHub stars](https://img.shields.io/github/stars/ZhuLinsen/daily_stock_analysis?style=social)](https://github.com/ZhuLinsen/daily_stock_analysis/stargazers)
 [![CI](https://github.com/ZhuLinsen/daily_stock_analysis/actions/workflows/ci.yml/badge.svg)](https://github.com/ZhuLinsen/daily_stock_analysis/actions/workflows/ci.yml)
@@ -13,147 +13,145 @@
   <a href="https://trendshift.io/repositories/18527" target="_blank"><img src="https://trendshift.io/api/badge/repositories/18527" alt="ZhuLinsen%2Fdaily_stock_analysis | Trendshift" width="230" /></a>&nbsp;<a href="https://hellogithub.com/repository/ZhuLinsen/daily_stock_analysis" target="_blank"><img src="https://api.hellogithub.com/v1/widgets/recommend.svg?rid=6daa16e405ce46ed97b4a57706aeb29f&claim_uid=pfiJMqhR9uvDGlT&theme=neutral" alt="Featured｜HelloGitHub" width="230" /></a>
 </p>
 
-> 🤖 基于 AI 大模型的 A股/港股/美股自选股智能分析系统，每日自动分析并推送「决策仪表盘」到企业微信/飞书/Telegram/Discord/Slack/邮箱
+> 🤖 Intelligent stock analysis system for A-shares, Hong Kong stocks, and US stocks based on large AI models. Automatically analyzes and pushes a "Decision Dashboard" to WeChat Work, Feishu, Telegram, Discord, Slack, and Email daily.
 
-[**产品预览**](#-产品预览) · [**功能特性**](#-功能特性) · [**快速开始**](#-快速开始) · [**推送效果**](#-推送效果) · [**文档中心**](docs/INDEX.md) · [**完整指南**](docs/full-guide.md)
+[**Product Preview**](#-product-preview) · [**Features**](#-features) · [**Quick Start**](#-quick-start) · [**Push Examples**](#-push-examples) · [**Documentation Center**](docs/INDEX.md) · [**Full Guide**](docs/full-guide.md)
 
-简体中文 | [English](docs/README_EN.md) | [繁體中文](docs/README_CHT.md)
+English | [Chinês Simplificado](docs/README_CN.md) | [Chinês Tradicional](docs/README_CHT.md)
 
 </div>
 
-## 💖 赞助商 (Sponsors)
+## 💖 Sponsors
 <div align="center">
   <p align="center">
-    <a href="https://open.anspire.cn/?share_code=QFBC0FYC" target="_blank"><img src="./docs/assets/anspire.png" alt="Anspire Open 一站式模型和搜索服务" width="300" height="141" style="width: 300px; height: 141px; object-fit: contain;"></a>
-    <a href="https://serpapi.com/baidu-search-api?utm_source=github_daily_stock_analysis" target="_blank"><img src="./docs/assets/serpapi_banner_zh.png" alt="轻松抓取搜索引擎上的实时金融新闻数据 - SerpApi" width="300" height="141" style="width: 300px; height: 141px; object-fit: contain;"></a>
+    <a href="https://open.anspire.cn/?share_code=QFBC0FYC" target="_blank"><img src="./docs/assets/anspire.png" alt="Anspire Open One-stop Model and Search Service" width="300" height="141" style="width: 300px; height: 141px; object-fit: contain;"></a>
+    <a href="https://serpapi.com/baidu-search-api?utm_source=github_daily_stock_analysis" target="_blank"><img src="./docs/assets/serpapi_banner_zh.png" alt="Easily scrape real-time financial news data from search engines - SerpApi" width="300" height="141" style="width: 300px; height: 141px; object-fit: contain;"></a>
   </p>
 </div>
 
-
-## 🖥️ 产品预览
+## 🖥️ Product Preview
 
 <p align="center">
-  <img src="docs/assets/readme_workspace_tour_20260510.gif" alt="DSA Web 工作台演示" width="720">
+  <img src="docs/assets/readme_workspace_tour_20260510.gif" alt="DSA Web Workspace Demo" width="720">
 </p>
 
-## ✨ 功能特性
+## ✨ Features
 
-| 能力 | 覆盖内容 |
+| Capability | Coverage |
 |------|------|
-| AI 决策报告 | 核心结论、评分、趋势、买卖点位、风险警报、催化因素、操作检查清单 |
-| 多市场数据聚合 | A股、港股、美股、ETF；行情、K 线、技术指标、资金流、筹码、新闻、公告和基本面 |
-| Web / 桌面工作台 | 手动分析、任务进度、历史报告、完整 Markdown、回测、持仓、配置管理、浅色 / 深色主题 |
-| Agent 策略问股 | 多轮追问，支持均线、缠论、波浪、趋势、热点、事件、成长、预期等 15 种内置策略，覆盖 Web/Bot/API |
-| 智能导入与补全 | 图片、CSV/Excel、剪贴板导入；股票代码/名称/拼音/别名补全 |
-| 自动化与推送 | GitHub Actions、Docker、本地定时任务、FastAPI 服务和企业微信/飞书/Telegram/Discord/Slack/邮件推送 |
+| AI Decision Report | Core conclusions, scoring, trends, buy/sell points, risk alerts, catalysts, operational checklists |
+| Multi-market Data Aggregation | A-shares, Hong Kong stocks, US stocks, ETFs; Quotes, K-lines, technical indicators, money flow, chip distribution, news, announcements, and fundamentals |
+| Web / Desktop Workspace | Manual analysis, task progress, historical reports, full Markdown, backtesting, holdings, configuration management, light/dark themes |
+| Agent Strategy Stock Query | Multi-round questioning, supports 15 built-in strategies (e.g., Moving Average, Chan Theory, Elliott Wave, Trend, Hot Topics, Events, Growth, Expectations), covering Web/Bot/API |
+| Smart Import & Autocomplete | Import via images, CSV/Excel, clipboard; Stock code/name/pinyin/alias autocomplete |
+| Automation & Push Notifications | GitHub Actions, Docker, local cron tasks, FastAPI service, and WeChat Work/Feishu/Telegram/Discord/Slack/Email push |
 
-> 功能细节、字段契约、基本面 P0 超时语义、交易纪律、数据源优先级、Web/API 行为请看 [完整配置与部署指南](docs/full-guide.md)。
+> For feature details, field contracts, fundamental P0 timeout semantics, trading disciplines, datasource priorities, and Web/API behaviors, please see the [Full Configuration and Deployment Guide](docs/full-guide.md).
 
-### 技术栈与数据来源
+### Tech Stack and Data Sources
 
-| 类型 | 支持 |
+| Type | Supported |
 |------|------|
-| AI 模型 | [Anspire](https://open.anspire.cn/?share_code=QFBC0FYC)、[AIHubMix](https://aihubmix.com/?aff=CfMq)、Gemini、OpenAI 兼容、DeepSeek、通义千问、Claude、Ollama 本地模型等 |
-| 行情数据 | [TickFlow](https://tickflow.org/auth/register?ref=WDSGSPS5XC)、AkShare、Tushare、Pytdx、Baostock、YFinance、Longbridge |
-| 新闻搜索 | [Anspire](https://open.anspire.cn/?share_code=QFBC0FYC)、[SerpAPI](https://serpapi.com/baidu-search-api?utm_source=github_daily_stock_analysis)、[Tavily](https://tavily.com/)、[Bocha](https://open.bocha.cn/)、[Brave](https://brave.com/search/api/)、[MiniMax](https://platform.minimaxi.com/)、SearXNG |
-| 社交舆情 | [Stock Sentiment API](https://api.adanos.org/docs)（Reddit / X / Polymarket，仅美股，可选） |
+| AI Models | [Anspire](https://open.anspire.cn/?share_code=QFBC0FYC), [AIHubMix](https://aihubmix.com/?aff=CfMq), Gemini, OpenAI Compatible, DeepSeek, Qwen, Claude, Ollama local models, etc. |
+| Market Data | [TickFlow](https://tickflow.org/auth/register?ref=WDSGSPS5XC), AkShare, Tushare, Pytdx, Baostock, YFinance, Longbridge |
+| News Search | [Anspire](https://open.anspire.cn/?share_code=QFBC0FYC), [SerpAPI](https://serpapi.com/baidu-search-api?utm_source=github_daily_stock_analysis), [Tavily](https://tavily.com/), [Bocha](https://open.bocha.cn/), [Brave](https://brave.com/search/api/), [MiniMax](https://platform.minimaxi.com/), SearXNG |
+| Social Sentiment | [Stock Sentiment API](https://api.adanos.org/docs) (Reddit / X / Polymarket, US stocks only, optional) |
 
-> 完整规则见 [数据源配置](docs/full-guide.md#数据源配置)。
+> For complete rules, see [Datasource Configuration](docs/full-guide.md#数据源配置).
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### 方式一：GitHub Actions（推荐）
+### Method 1: GitHub Actions (Recommended)
 
-> 5 分钟完成部署，零成本，无需服务器。
+> Deploy in 5 minutes, zero cost, no server required.
 
+#### 1. Fork this Repository
 
-#### 1. Fork 本仓库
+Click the `Fork` button in the top right corner (and hit Star⭐ to support us).
 
-点击右上角 `Fork` 按钮（顺便点个 Star⭐ 支持一下）
-
-#### 2. 配置 Secrets
+#### 2. Configure Secrets
 
 `Settings` → `Secrets and variables` → `Actions` → `New repository secret`
 
-**AI 模型配置（至少配置一个）**
+**AI Model Configuration (at least one required)**
 
-默认先选一个模型服务商并填写 API Key；需要多模型、图片识别、本地模型或高级路由时，再参考 [LLM 配置指南](docs/LLM_CONFIG_GUIDE.md)。
+Choose an AI provider and fill in the API Key first; if you need multi-model, image recognition, local models, or advanced routing, refer to the [LLM Configuration Guide](docs/LLM_CONFIG_GUIDE.md).
 
-| Secret 名称 | 说明 | 必填 |
+| Secret Name | Description | Required |
 |------------|------|:----:|
-| `ANSPIRE_API_KEYS` | [Anspire](https://open.anspire.cn/?share_code=QFBC0FYC) API Key，一Key同时启用全球热门大模型和联网搜索，无需科学上网，含免费额度 | **推荐** |
-| `AIHUBMIX_KEY` | [AIHubMix](https://aihubmix.com/?aff=CfMq) API Key，一Key切换使用全系模型，无需科学上网，本项目可享 10% 优惠 | **推荐** |
-| `GEMINI_API_KEY` | Google Gemini API Key | 可选 |
-| `ANTHROPIC_API_KEY` | Anthropic Claude API Key | 可选 |
-| `OPENAI_API_KEY` | OpenAI 兼容 API Key（支持 DeepSeek、通义千问等） | 可选 |
-| `OPENAI_BASE_URL` / `OPENAI_MODEL` | 使用 OpenAI 兼容服务时填写 | 可选 |
+| `ANSPIRE_API_KEYS` | [Anspire](https://open.anspire.cn/?share_code=QFBC0FYC) API Key, one key enables global popular models and web search simultaneously. Includes free tier. | **Recommended** |
+| `AIHUBMIX_KEY` | [AIHubMix](https://aihubmix.com/?aff=CfMq) API Key, one key to switch between all models. Enjoy a 10% discount for this project. | **Recommended** |
+| `GEMINI_API_KEY` | Google Gemini API Key | Optional |
+| `ANTHROPIC_API_KEY` | Anthropic Claude API Key | Optional |
+| `OPENAI_API_KEY` | OpenAI Compatible API Key (supports DeepSeek, Qwen, etc.) | Optional |
+| `OPENAI_BASE_URL` / `OPENAI_MODEL` | Fill in when using OpenAI compatible services | Optional |
 
-> Ollama 更适合本地 / Docker 部署，GitHub Actions 推荐使用云端 API。
+> Ollama is better suited for local/Docker deployment; GitHub Actions is recommended to use cloud APIs.
 
-**通知渠道配置（至少配置一个）**
+**Notification Channel Configuration (at least one required)**
 
-| Secret 名称 | 说明 |
+| Secret Name | Description |
 |------------|------|
-| `WECHAT_WEBHOOK_URL` | 企业微信机器人 |
-| `FEISHU_WEBHOOK_URL` | 飞书机器人 |
+| `WECHAT_WEBHOOK_URL` | WeChat Work Bot |
+| `FEISHU_WEBHOOK_URL` | Feishu Bot |
 | `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` | Telegram |
 | `DISCORD_WEBHOOK_URL` | Discord Webhook |
 | `SLACK_BOT_TOKEN` + `SLACK_CHANNEL_ID` | Slack Bot |
-| `EMAIL_SENDER` + `EMAIL_PASSWORD` | 邮件推送 |
+| `EMAIL_SENDER` + `EMAIL_PASSWORD` | Email Push |
 
-更多渠道、签名校验、分组邮件、Markdown 转图片等配置见 [通知渠道详细配置](docs/full-guide.md#通知渠道详细配置)。
+For more channels, signature verification, grouped emails, and Markdown-to-image configurations, see [Detailed Notification Channel Configuration](docs/full-guide.md#通知渠道详细配置).
 
-**自选股配置（必填）**
+**Stock Watchlist Configuration (Required)**
 
-| Secret 名称 | 说明 | 必填 |
+| Secret Name | Description | Required |
 |------------|------|:----:|
-| `STOCK_LIST` | 自选股代码，如 `600519,hk00700,AAPL,TSLA` | ✅ |
+| `STOCK_LIST` | Watchlist stock codes, e.g., `600519,hk00700,AAPL,TSLA` | ✅ |
 
-**新闻源配置（推荐）**
+**News Source Configuration (Recommended)**
 
-新闻源会显著影响舆情、公告、事件和催化因素质量，建议至少配置一个搜索服务。
+News sources significantly impact sentiment, announcements, events, and catalyst quality. It's recommended to configure at least one search service.
 
-| Secret 名称 | 说明 | 必填 |
+| Secret Name | Description | Required |
 |------------|------|:----:|
-| `ANSPIRE_API_KEYS` | [Anspire AI Search](https://aisearch.anspire.cn/)：中文内容特别优化，适合 A 股新闻和舆情检索；同一 Key 可复用为 Anspire 大模型 | **推荐** |
-| `SERPAPI_API_KEYS` | [SerpAPI](https://serpapi.com/baidu-search-api?utm_source=github_daily_stock_analysis)：搜索引擎结果补强，适合实时金融新闻 | **推荐** |
-| `TAVILY_API_KEYS` | [Tavily](https://tavily.com/)：通用新闻搜索 API | 可选 |
-| `BOCHA_API_KEYS` | [博查搜索](https://open.bocha.cn/)：中文搜索优化，支持 AI 摘要 | 可选 |
-| `BRAVE_API_KEYS` | [Brave Search](https://brave.com/search/api/)：隐私优先，美股资讯补强 | 可选 |
-| `MINIMAX_API_KEYS` | [MiniMax](https://platform.minimaxi.com/)：结构化搜索结果 | 可选 |
-| `SEARXNG_BASE_URLS` | SearXNG 自建实例：无配额兜底，适合私有部署 | 可选 |
+| `ANSPIRE_API_KEYS` | [Anspire AI Search](https://aisearch.anspire.cn/): Specially optimized for Chinese content; the same Key can be reused for the Anspire LLM | **Recommended** |
+| `SERPAPI_API_KEYS` | [SerpAPI](https://serpapi.com/baidu-search-api?utm_source=github_daily_stock_analysis): Search engine results reinforcement, ideal for real-time financial news | **Recommended** |
+| `TAVILY_API_KEYS` | [Tavily](https://tavily.com/): General news search API | Optional |
+| `BOCHA_API_KEYS` | [Bocha Search](https://open.bocha.cn/): Chinese search optimization, supports AI summaries | Optional |
+| `BRAVE_API_KEYS` | [Brave Search](https://brave.com/search/api/): Privacy-first, US stock info reinforcement | Optional |
+| `MINIMAX_API_KEYS` | [MiniMax](https://platform.minimaxi.com/): Structured search results | Optional |
+| `SEARXNG_BASE_URLS` | SearXNG self-hosted instance: No quota fallback, suitable for private deployment | Optional |
 
-更多搜索源、社交舆情和降级规则见 [搜索服务配置](docs/full-guide.md#搜索服务配置)。
+For more search sources, social sentiment, and fallback rules, see [Search Service Configuration](docs/full-guide.md#搜索服务配置).
 
-#### 3. 启用 Actions
+#### 3. Enable Actions
 
-`Actions` 标签 → `I understand my workflows, go ahead and enable them`
+Go to the `Actions` tab → `I understand my workflows, go ahead and enable them`
 
-#### 4. 手动测试
+#### 4. Manual Testing
 
-`Actions` → `每日股票分析` → `Run workflow` → `Run workflow`
+`Actions` → `Daily Stock Analysis` (Análise Diária de Ações) → `Run workflow` → `Run workflow`
 
-#### 完成
+#### Done
 
-默认每个**工作日 18:00（北京时间）**自动执行，也可手动触发。默认非交易日（含 A/H/US 节假日）不执行；强制运行、交易日检查、断点续传等规则见 [完整指南](docs/full-guide.md#定时任务配置)。
+By default, it automatically executes every **workday at 18:00 (Beijing Time)**, or can be triggered manually. Non-trading days (including A-share/HK/US holidays) are skipped by default. For force-run, trading day checks, resumable executions, etc., see the [Full Guide](docs/full-guide.md#定时任务配置).
 
-### 方式二：本地运行 / Docker 部署
+### Method 2: Local Run / Docker Deployment
 
 ```bash
-# 克隆项目
+# Clone the project
 git clone https://github.com/ZhuLinsen/daily_stock_analysis.git && cd daily_stock_analysis
 
-# 安装依赖
+# Install dependencies
 pip install -r requirements.txt
 
-# 配置环境变量
+# Configure environment variables
 cp .env.example .env && vim .env
 
-# 运行分析
+# Run analysis
 python main.py
 ```
 
-常用命令：
+Common Commands:
 
 ```bash
 python main.py --debug
@@ -164,113 +162,113 @@ python main.py --schedule
 python main.py --serve-only
 ```
 
-> Docker 部署、定时任务、云服务器访问请参考 [完整指南](docs/full-guide.md)；桌面客户端打包请参考 [桌面端打包说明](docs/desktop-package.md)。
+> For Docker deployment, cron tasks, and cloud server access, refer to the [Full Guide](docs/full-guide.md); for desktop client packaging, see [Desktop Packaging Guide](docs/desktop-package.md).
 
-## 📱 推送效果
+## 📱 Push Examples
 
-### 决策仪表盘
+### Decision Dashboard
 ```
-🎯 2026-02-08 决策仪表盘
-共分析3只股票 | 🟢买入:0 🟡观望:2 🔴卖出:1
+🎯 2026-02-08 Decision Dashboard
+Total 3 stocks analyzed | 🟢 Buy: 0 🟡 Wait & See: 2 🔴 Sell: 1
 
-📊 分析结果摘要
-⚪ 中钨高新(000657): 观望 | 评分 65 | 看多
-⚪ 永鼎股份(600105): 观望 | 评分 48 | 震荡
-🟡 新莱应材(300260): 卖出 | 评分 35 | 看空
+📊 Analysis Summary
+⚪ Zhongwu High-tech (000657): Wait & See | Score 65 | Bullish
+⚪ Yongding Corp (600105): Wait & See | Score 48 | Oscillating
+🟡 Xinlai App. Mat. (300260): Sell | Score 35 | Bearish
 
-⚪ 中钨高新 (000657)
-📰 重要信息速览
-💭 舆情情绪: 市场关注其AI属性与业绩高增长，情绪偏积极，但需消化短期获利盘和主力流出压力。
-📊 业绩预期: 基于舆情信息，公司2025年前三季度业绩同比大幅增长，基本面强劲，为股价提供支撑。
+⚪ Zhongwu High-tech (000657)
+📰 Key Information Quick Glance
+💭 Sentiment: Market focuses on its AI attributes and high performance growth, sentiment is slightly positive, but needs to digest short-term profit-taking and institutional outflow pressure.
+📊 Performance Expectation: Based on sentiment info, the company's Q1-Q3 2025 net profit YoY grew significantly, fundamentals are strong, providing support for the stock price.
 
-🚨 风险警报:
+🚨 Risk Alerts:
+Risk 1: Net institutional outflow of 363 million CNY on Feb 5, beware of short-term selling pressure.
+Risk 2: Chip concentration is as high as 35.15%, indicating dispersed chips, potential high resistance to price increases.
+Risk 3: Sentiment mentioned historical compliance records and restructuring risks, requires close monitoring.
 
-风险点1：2月5日主力资金大幅净卖出3.63亿元，需警惕短期抛压。
-风险点2：筹码集中度高达35.15%，表明筹码分散，拉升阻力可能较大。
-风险点3：舆情中提及公司历史违规记录及重组相关风险提示，需保持关注。
-✨ 利好催化:
+✨ Catalysts:
+Catalyst 1: The company is positioned by the market as a core HDI supplier for AI servers, benefiting from AI industry development.
+Catalyst 2: Q1-Q3 2025 non-GAAP net profit surged 407.52% YoY, strong performance.
 
-利好1：公司被市场定位为AI服务器HDI核心供应商，受益于AI产业发展。
-利好2：2025年前三季度扣非净利润同比暴涨407.52%，业绩表现强劲。
-📢 最新动态: 【最新消息】舆情显示公司是AI PCB微钻领域龙头，深度绑定全球头部PCB/载板厂。2月5日主力资金净卖出3.63亿元，需关注后续资金流向。
+📢 Latest Dynamics: [Latest News] Sentiment shows the company is a leader in AI PCB micro-drills, deeply bound to global top PCB/substrate manufacturers. Institutional outflow of 363M CNY on Feb 5, monitor subsequent money flow.
 
 ---
-生成时间: 18:00
+Generated at: 18:00
 ```
 
-### 大盘复盘
+### Market Review
 ```
-🎯 2026-01-10 大盘复盘
+🎯 2026-01-10 Market Review
 
-📊 主要指数
-- 上证指数: 3250.12 (🟢+0.85%)
-- 深证成指: 10521.36 (🟢+1.02%)
-- 创业板指: 2156.78 (🟢+1.35%)
+📊 Major Indices
+- Shanghai Composite: 3250.12 (🟢+0.85%)
+- Shenzhen Component: 10521.36 (🟢+1.02%)
+- ChiNext: 2156.78 (🟢+1.35%)
 
-📈 市场概况
-上涨: 3920 | 下跌: 1349 | 涨停: 155 | 跌停: 3
+📈 Market Overview
+Advancing: 3920 | Declining: 1349 | Limit Up: 155 | Limit Down: 3
 
-🔥 板块表现
-领涨: 互联网服务、文化传媒、小金属
-领跌: 保险、航空机场、光伏设备
+🔥 Sector Performance
+Leading: Internet Services, Culture & Media, Minor Metals
+Laggards: Insurance, Aviation & Airports, PV Equipment
 ```
 
-## ⚙️ 配置说明
+## ⚙️ Configuration Instructions
 
-完整环境变量、模型渠道、通知渠道、数据源优先级、交易纪律、基本面 P0 语义和部署说明请参考 [完整配置指南](docs/full-guide.md)。
+For full environment variables, model channels, notification channels, datasource priorities, trading disciplines, fundamental P0 semantics, and deployment instructions, refer to the [Full Configuration Guide](docs/full-guide.md).
 
-## 🖥️ Web 界面
+## 🖥️ Web Interface
 
-Web 工作台提供配置管理、任务监控、手动分析、历史报告、完整 Markdown 报告、Agent 问股、回测、持仓管理、智能导入和浅色 / 深色主题。启动方式：
+The Web workspace provides config management, task monitoring, manual analysis, historical reports, full Markdown reports, Agent stock querying, backtesting, holdings management, smart imports, and light/dark themes. Start methods:
 
 ```bash
 python main.py --webui
 python main.py --webui-only
 ```
 
-访问 `http://127.0.0.1:8000` 即可使用。认证、智能导入、搜索补全、历史报告复制、云服务器访问等细节见 [本地 WebUI 管理界面](docs/full-guide.md#本地-webui-管理界面)。
+Access `http://127.0.0.1:8000` to use it. For authentication, smart imports, search autocomplete, history report copying, and cloud server access details, see the [Local WebUI Management Interface](docs/full-guide.md#本地-webui-管理界面).
 
-## 🤖 Agent 策略问股
+## 🤖 Agent Strategy Stock Query
 
-配置任意可用 AI API Key 后，Web `/chat` 页面即可使用策略问股；如需显式关闭可设置 `AGENT_MODE=false`。
+After configuring any available AI API Key, you can use strategy stock querying on the Web `/chat` page. If you want to disable it explicitly, set `AGENT_MODE=false`.
 
-- 支持均线金叉、缠论、波浪理论、多头趋势、热点题材、事件驱动、成长质量、预期重估等内置策略
-- 支持实时行情、K 线、技术指标、新闻和风险信息调用
-- 支持多轮追问、会话导出、发送到通知渠道和后台执行
-- 支持自定义策略文件与多 Agent 编排（实验性）
+- Supports built-in strategies like Moving Average Golden Cross, Chan Theory, Elliott Wave, Bullish Trend, Hot Themes, Event-Driven, Growth Quality, Expectation Repricing, etc.
+- Supports real-time quotes, K-lines, technical indicators, news, and risk information invocation.
+- Supports multi-round follow-up questions, session export, push to notification channels, and background execution.
+- Supports custom strategy files and multi-agent orchestration (experimental).
 
-> Agent 具体参数、`skill` 命名兼容、多 Agent 模式和预算护栏见 [完整指南](docs/full-guide.md#本地-webui-管理界面) 与 [LLM 配置指南](docs/LLM_CONFIG_GUIDE.md)。
+> For specific Agent parameters, `skill` naming compatibility, multi-agent modes, and budget guardrails, see the [Full Guide](docs/full-guide.md#本地-webui-管理界面) and [LLM Configuration Guide](docs/LLM_CONFIG_GUIDE.md).
 
-## 🧩 相关项目 (Related Projects)
+## 🧩 Related Projects
 
-> DSA 聚焦日常分析报告；下面两个同系列项目分别覆盖选股、策略验证与策略进化，适合按需延伸使用。它们当前独立维护，后续会优先探索与 DSA 的候选股导入、回测验证和报告联动。
+> DSA focuses on daily analysis reports. The following two projects cover stock picking, strategy verification, and strategy evolution, suitable for extended use. They are currently maintained independently, and we will prioritize exploring linkages with DSA for candidate stock importing, backtest verification, and report integration.
 
-| 项目 | 定位 |
+| Project | Positioning |
 |------|------|
-| [AlphaSift](https://github.com/ZhuLinsen/alphasift) | 多因子选股与全市场扫描，用于从股票池中提取候选标的 |
-| [AlphaEvo](https://github.com/ZhuLinsen/alphaevo) | 策略回测与自我进化，用于验证策略规则，并通过迭代探索策略参数与组合 |
+| [AlphaSift](https://github.com/ZhuLinsen/alphasift) | Multi-factor stock picking and market-wide scanning to extract candidate targets from the stock pool. |
+| [AlphaEvo](https://github.com/ZhuLinsen/alphaevo) | Strategy backtesting and self-evolution, used to verify strategy rules and iteratively explore strategy parameters and combinations. |
 
-## 📬 联系与合作
+## 📬 Contact & Cooperation
 
 <table>
   <tr>
-    <td width="92" valign="top"><strong>合作邮箱</strong></td>
+    <td width="92" valign="top"><strong>Cooperation Email</strong></td>
     <td valign="top">
       <a href="mailto:zhuls345@gmail.com">zhuls345@gmail.com</a><br>
-      项目咨询、部署支持与功能扩展
+      Project consultation, deployment support, and feature extension
     </td>
     <td align="center" rowspan="3" valign="middle" width="148">
-      <a href="http://xhslink.com/m/tU520DWCKT" target="_blank"><img src="./docs/assets/xiaohongshu_tick.jpg" width="112" alt="小红书二维码"></a><br>
-      <sub>扫码关注小红书</sub>
+      <a href="http://xhslink.com/m/tU520DWCKT" target="_blank"><img src="./docs/assets/xiaohongshu_tick.jpg" width="112" alt="Xiaohongshu QR Code"></a><br>
+      <sub>Scan to follow Xiaohongshu</sub>
     </td>
   </tr>
   <tr>
-    <td width="92" valign="top"><strong>小红书</strong></td>
-    <td valign="top"><a href="http://xhslink.com/m/tU520DWCKT">欢迎关注小红书</a></td>
+    <td width="92" valign="top"><strong>Xiaohongshu</strong></td>
+    <td valign="top"><a href="http://xhslink.com/m/tU520DWCKT">Welcome to follow on Xiaohongshu</a></td>
   </tr>
   <tr>
-    <td width="92" valign="top"><strong>问题反馈</strong></td>
-    <td valign="top"><a href="https://github.com/ZhuLinsen/daily_stock_analysis/issues">提交 Issue</a></td>
+    <td width="92" valign="top"><strong>Issue Feedback</strong></td>
+    <td valign="top"><a href="https://github.com/ZhuLinsen/daily_stock_analysis/issues">Submit an Issue</a></td>
   </tr>
 </table>
 
@@ -278,10 +276,10 @@ python main.py --webui-only
 
 [MIT License](LICENSE) © 2026 ZhuLinsen
 
-欢迎在二次开发或引用时注明本仓库来源，感谢支持项目持续维护。
+When customizing or citing, please indicate the source of this repository. Thank you for supporting the continuous maintenance of the project.
 
-## ⚠️ 免责声明
+## ⚠️ Disclaimer
 
-本项目仅供学习和研究使用，不构成任何投资建议。股市有风险，投资需谨慎。作者不对使用本项目产生的任何损失负责。
+This project is for learning and research purposes only and does not constitute any investment advice. The stock market is risky, and investment requires caution. The author is not responsible for any losses incurred by using this project.
 
 ---

@@ -9,8 +9,8 @@ async function login(page: Page) {
   await page.waitForLoadState('domcontentloaded');
 
   const passwordInput = page.locator('#password');
-  const submitButton = page.getByRole('button', { name: /授权进入工作台|完成设置并登录/ });
-  const homeLink = page.getByRole('link', { name: '首页' });
+  const submitButton = page.getByRole('button', { name: /Autorizar entrada na área de trabalho|Concluir configuração e entrar/ });
+  const homeLink = page.getByRole('link', { name: 'Início' });
 
   const isAlreadyAuthenticated =
     page.url().endsWith('/') ||
@@ -51,20 +51,20 @@ test.describe('web smoke', () => {
     await expect(page.locator('#password')).toBeVisible();
 
     // Check for submit button
-    await expect(page.getByRole('button', { name: /授权进入工作台|完成设置并登录/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Autorizar entrada na área de trabalho|Concluir configuração e entrar/ })).toBeVisible();
   });
 
   test('home page shows analysis entry and history panel after login', async ({ page }) => {
     await login(page);
 
-    const stockInput = page.getByPlaceholder('输入股票代码或名称，如 600519、贵州茅台、AAPL');
+    const stockInput = page.getByPlaceholder('Insira o código ou nome da ação, como 600519, Guizhou Moutai, AAPL');
     await expect(stockInput).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByRole('link', { name: '首页' })).toBeVisible();
-    await expect(page.getByRole('link', { name: '问股' })).toBeVisible();
-    await expect(page.getByText('历史分析')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Início' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Consultar Ações' })).toBeVisible();
+    await expect(page.getByText('Análise Histórica')).toBeVisible();
 
     await stockInput.fill('600519');
-    const analyzeButton = page.getByRole('button', { name: '分析', exact: true });
+    const analyzeButton = page.getByRole('button', { name: 'Analisar', exact: true });
     await expect(analyzeButton).toBeVisible();
   });
 
@@ -72,7 +72,7 @@ test.describe('web smoke', () => {
     await login(page);
 
     // Navigate to chat page by clicking the link
-    await page.getByRole('link', { name: '问股' }).click();
+    await page.getByRole('link', { name: 'Consultar Ações' }).click();
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(1000);
 
@@ -80,13 +80,13 @@ test.describe('web smoke', () => {
     await expect(page.getByTestId('chat-session-list-scroll')).toBeVisible();
     await expect(page.getByTestId('chat-message-scroll')).toBeVisible();
 
-    const input = page.getByPlaceholder(/分析 600519/);
+    const input = page.getByPlaceholder(/Analisar 600519/);
     await expect(input).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText('策略', { exact: true })).toBeVisible();
+    await expect(page.getByText('Estratégia', { exact: true })).toBeVisible();
 
-    const prompt = '请简要分析 600519';
+    const prompt = 'Por favor, analise brevemente o 600519';
     await input.fill(prompt);
-    await page.getByRole('button', { name: '发送' }).click();
+    await page.getByRole('button', { name: 'Enviar' }).click();
 
     await expect(page.locator('p').filter({ hasText: prompt }).last()).toBeVisible({ timeout: 5000 });
   });
@@ -94,11 +94,11 @@ test.describe('web smoke', () => {
   test('chat page uses accessible labels instead of native title attributes for key actions', async ({ page }) => {
     await login(page);
 
-    await page.getByRole('link', { name: '问股' }).click();
+    await page.getByRole('link', { name: 'Consultar Ações' }).click();
     await page.waitForLoadState('domcontentloaded');
 
-    const sendButton = page.getByRole('button', { name: '发送' });
-    const composer = page.getByPlaceholder(/分析 600519/);
+    const sendButton = page.getByRole('button', { name: 'Enviar' });
+    const composer = page.getByPlaceholder(/Analisar 600519/);
 
     await expect(page.getByTestId('chat-workspace')).toBeVisible({ timeout: 10_000 });
     await expect(sendButton).toBeVisible({ timeout: 10_000 });
@@ -113,41 +113,41 @@ test.describe('web smoke', () => {
     await login(page);
 
     // Try to open navigation menu
-    const menuButton = page.getByRole('button', { name: /打开导航|菜单/i });
+    const menuButton = page.getByRole('button', { name: /Abrir navegação|Menu/i });
     if (await menuButton.isVisible({ timeout: 2000 }).catch(() => false)) {
       await menuButton.click();
     }
 
     // Check if navigation is visible
-    await expect(page.getByRole('link', { name: '回测' })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('link', { name: 'Backtest' })).toBeVisible({ timeout: 5000 });
   });
 
   test('settings page renders title and save actions after login', async ({ page }) => {
     await login(page);
 
     // Navigate to settings page by clicking the link
-    await page.getByRole('link', { name: '设置' }).click();
+    await page.getByRole('link', { name: 'Configurações' }).click();
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(1000);
 
     // Use heading role for more precise selection
-    await expect(page.getByRole('heading', { name: '系统设置' })).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByRole('button', { name: '重置' })).toBeVisible();
-    await expect(page.getByRole('button', { name: /保存配置/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Configurações do Sistema' })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('button', { name: 'Redefinir' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Salvar Configuração/ })).toBeVisible();
   });
 
   test('backtest page renders filter controls after login', async ({ page }) => {
     await login(page);
 
     // Navigate to backtest page by clicking the link
-    await page.getByRole('link', { name: '回测' }).click();
+    await page.getByRole('link', { name: 'Backtest' }).click();
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(1000);
 
     // Check for filter controls
-    const filterInput = page.getByPlaceholder('按股票代码筛选（留空表示全部）');
+    const filterInput = page.getByPlaceholder('Filtrar por código da ação (deixe em branco para todas)');
     await expect(filterInput).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByRole('button', { name: '筛选' })).toBeVisible();
-    await expect(page.getByRole('button', { name: '运行回测' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Filtrar' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Executar Backtest' })).toBeVisible();
   });
 });

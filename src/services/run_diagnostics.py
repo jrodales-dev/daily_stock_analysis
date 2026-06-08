@@ -477,10 +477,10 @@ def record_history_run(
 
 
 _SUMMARY_STATUS_LABELS = {
-    "normal": "正常",
-    "degraded": "部分降级",
-    "failed": "失败",
-    "unknown": "未知",
+    "normal": "Normal",
+    "degraded": "Parcialmente Degradado",
+    "failed": "Falha",
+    "unknown": "Desconhecido",
 }
 
 
@@ -525,7 +525,7 @@ def _provider_component(
         if isinstance(run, dict) and run.get("data_type") == data_type
     ]
     if not runs:
-        return _component(key, label, "unknown", f"{label}未记录诊断信息")
+        return _component(key, label, "unknown", f"{label} - sem informações de diagnóstico registradas")
 
     successes = [run for run in runs if run.get("success") is True]
     failures = [run for run in runs if run.get("success") is False]
@@ -549,27 +549,27 @@ def _provider_component(
                 key,
                 label,
                 "degraded",
-                f"{label}{provider} 成功，前置数据源失败后已继续",
+                f"{label} - {provider} bem-sucedido após falha de fonte anterior",
                 details,
             )
         return _component(
             key,
             label,
             "ok",
-            f"{label}{provider} 成功",
+            f"{label} - {provider} bem-sucedido",
             details,
         )
 
     message = (
         last_run.get("error_message_sanitized")
         or last_run.get("error_type")
-        or "所有数据源尝试失败"
+        or "todas as fontes de dados falharam"
     )
     return _component(
         key,
         label,
         "failed",
-        f"{label}失败：{message}",
+        f"{label} - falha: {message}",
         {
             "attempts": len(runs),
             "provider": last_run.get("provider"),
@@ -579,7 +579,7 @@ def _provider_component(
 
 
 def _news_component(context_snapshot: Dict[str, Any], raw_result: Dict[str, Any]) -> RunDiagnosticComponent:
-    label = "新闻搜索"
+    label = "Busca de Notícias"
     has_retrieval_news = "news_retrieval_content" in context_snapshot
     has_snapshot_news = has_retrieval_news or "news_content" in context_snapshot
     news_result_count = context_snapshot.get("news_result_count")
@@ -589,13 +589,13 @@ def _news_component(context_snapshot: Dict[str, Any], raw_result: Dict[str, Any]
                 "news",
                 label,
                 "ok",
-                f"新闻检索返回 {news_result_count} 条结果",
+                f"Busca de notícias retornou {news_result_count} resultado(s)",
                 {"record_count": news_result_count},
             )
-        return _component("news", label, "degraded", "新闻搜索无结果", {"record_count": 0})
+        return _component("news", label, "degraded", "Busca de notícias sem resultados", {"record_count": 0})
     if has_snapshot_news and not has_retrieval_news:
-        return _component("news", label, "unknown", "新闻检索未记录原始证据，可能未尝试或未启用")
-    return _component("news", label, "unknown", "新闻搜索未记录诊断信息")
+        return _component("news", label, "unknown", "Busca de notícias sem evidência registrada, pode não ter sido tentada ou ativada")
+    return _component("news", label, "unknown", "Busca de notícias sem informações de diagnóstico")
 
 
 def _llm_component(diagnostics: Dict[str, Any], raw_result: Dict[str, Any]) -> RunDiagnosticComponent:
@@ -612,9 +612,9 @@ def _llm_component(diagnostics: Dict[str, Any], raw_result: Dict[str, Any]) -> R
             success_run = successes[-1]
             model = success_run.get("model") or raw_result.get("model_used") or "unknown"
             status = "degraded" if failures or success_run.get("fallback_model") else "ok"
-            message = f"LLM {model} 成功"
+            message = f"LLM {model} bem-sucedido"
             if status == "degraded":
-                message = f"LLM {model} 成功，期间发生过失败或模型切换"
+                message = f"LLM {model} bem-sucedido, houve falha ou troca de modelo"
             return _component(
                 "llm",
                 label,
@@ -631,7 +631,7 @@ def _llm_component(diagnostics: Dict[str, Any], raw_result: Dict[str, Any]) -> R
             "llm",
             label,
             "failed",
-            f"LLM 失败：{last_run.get('error_message_sanitized') or last_run.get('error_type') or '未知错误'}",
+            f"LLM falhou: {last_run.get('error_message_sanitized') or last_run.get('error_type') or 'erro desconhecido'}",
             {"model": last_run.get("model"), "error_type": last_run.get("error_type")},
         )
 
@@ -641,24 +641,24 @@ def _llm_component(diagnostics: Dict[str, Any], raw_result: Dict[str, Any]) -> R
                 "llm",
                 label,
                 "failed",
-                f"LLM 失败：{sanitize_diagnostic_text(raw_result.get('error_message')) or '未知错误'}",
+                f"LLM falhou: {sanitize_diagnostic_text(raw_result.get('error_message')) or 'erro desconhecido'}",
             )
         model = raw_result.get("model_used")
         if model:
-            return _component("llm", label, "ok", f"LLM {model} 成功", {"model": model})
+            return _component("llm", label, "ok", f"LLM {model} bem-sucedido", {"model": model})
         if raw_result.get("analysis_summary"):
-            return _component("llm", label, "ok", "LLM 成功，模型未记录")
-    return _component("llm", label, "unknown", "LLM 未记录诊断信息")
+            return _component("llm", label, "ok", "LLM bem-sucedido, modelo não registrado")
+    return _component("llm", label, "unknown", "LLM sem informações de diagnóstico registradas")
 
 
 def _notification_component(diagnostics: Dict[str, Any]) -> RunDiagnosticComponent:
-    label = "通知"
+    label = "Notificações"
     runs = [
         run for run in _as_list(diagnostics.get("notification_runs"))
         if isinstance(run, dict)
     ]
     if not runs:
-        return _component("notification", label, "unknown", "通知结果未记录")
+        return _component("notification", label, "unknown", "Resultado de notificação não registrado")
 
     skipped = [run for run in runs if run.get("status") in {"skipped", "not_configured"}]
     successes = [run for run in runs if run.get("success") is True]
@@ -669,7 +669,7 @@ def _notification_component(diagnostics: Dict[str, Any]) -> RunDiagnosticCompone
             "notification",
             label,
             "degraded",
-            "部分通知渠道失败，其余渠道已发送",
+            "Parte dos canais de notificação falhou, outros foram enviados",
             {"channels": channels, "failed": [run.get("channel") for run in failures]},
         )
     if successes:
@@ -677,7 +677,7 @@ def _notification_component(diagnostics: Dict[str, Any]) -> RunDiagnosticCompone
             "notification",
             label,
             "ok",
-            "通知发送成功",
+            "Notificação enviada com sucesso",
             {"channels": channels},
         )
     if skipped and not failures:
@@ -686,7 +686,7 @@ def _notification_component(diagnostics: Dict[str, Any]) -> RunDiagnosticCompone
             "notification",
             label,
             status,
-            "通知未配置或本次跳过",
+            "Notificação não configurada ou ignorada nesta execução",
             {"channels": channels},
         )
     last_failure = failures[-1] if failures else runs[-1]
@@ -694,7 +694,7 @@ def _notification_component(diagnostics: Dict[str, Any]) -> RunDiagnosticCompone
         "notification",
         label,
         "failed",
-        f"通知失败：{last_failure.get('error_message_sanitized') or last_failure.get('status') or '未知错误'}",
+        f"Notificação falhou: {last_failure.get('error_message_sanitized') or last_failure.get('status') or 'erro desconhecido'}",
         {"channels": channels},
     )
 
@@ -703,7 +703,7 @@ def _history_component(
     diagnostics: Dict[str, Any],
     report_saved: Optional[bool],
 ) -> RunDiagnosticComponent:
-    label = "历史保存"
+    label = "Histórico"
     runs = [
         run for run in _as_list(diagnostics.get("history_runs"))
         if isinstance(run, dict)
@@ -715,20 +715,20 @@ def _history_component(
                 "history",
                 label,
                 "ok",
-                "报告历史已保存",
+                "Histórico do relatório salvo",
                 {"analysis_history_id": last_run.get("analysis_history_id")},
             )
         return _component(
             "history",
             label,
             "failed",
-            f"报告历史保存失败：{last_run.get('error_message_sanitized') or '未知错误'}",
+            f"Falha ao salvar histórico do relatório: {last_run.get('error_message_sanitized') or 'erro desconhecido'}",
         )
     if report_saved is True:
-        return _component("history", label, "ok", "报告历史已保存")
+        return _component("history", label, "ok", "Histórico do relatório salvo")
     if report_saved is False:
-        return _component("history", label, "failed", "报告历史保存失败")
-    return _component("history", label, "unknown", "历史保存未记录诊断信息")
+        return _component("history", label, "failed", "Falha ao salvar histórico do relatório")
+    return _component("history", label, "unknown", "Histórico sem informações de diagnóstico registradas")
 
 
 def build_run_diagnostic_summary(
@@ -755,13 +755,13 @@ def build_run_diagnostic_summary(
     components = {
         "realtime_quote": _provider_component(
             key="realtime_quote",
-            label="实时行情",
+            label="Cotação em Tempo Real",
             data_type="realtime_quote",
             provider_runs=provider_runs,
         ),
         "daily_data": _provider_component(
             key="daily_data",
-            label="日线数据",
+            label="Dados Diários",
             data_type="daily_data",
             provider_runs=provider_runs,
         ),
@@ -787,7 +787,7 @@ def build_run_diagnostic_summary(
         status = "normal"
 
     if status == "unknown":
-        reason = "旧报告或诊断证据不足，无法判断本次运行状态"
+        reason = "Relatório antigo ou evidência de diagnóstico insuficiente para determinar o estado desta execução"
     else:
         reason = next(
             (

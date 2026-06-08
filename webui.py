@@ -1,18 +1,15 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-WebUI 启动脚本
+Web Management Interface Entry
 ===================================
 
-用于启动 Web 服务界面。
-直接运行 `python webui.py` 将启动 Web 后端服务。
-
-等效命令：
+This script is kept for backward compatibility.
+The recommended way to start the web service is:
     python main.py --webui-only
 
 Usage:
-  python webui.py
-  WEBUI_HOST=0.0.0.0 WEBUI_PORT=8000 python webui.py
+    python webui.py
 """
 
 from __future__ import annotations
@@ -25,14 +22,14 @@ logger = logging.getLogger(__name__)
 
 def main() -> int:
     """
-    启动 Web 服务
+    Start Web Service
     """
-    # 兼容旧版环境变量名
+    # Backward compatibility with old environment variables
     host = os.getenv("WEBUI_HOST", os.getenv("API_HOST", "127.0.0.1"))
     port = int(os.getenv("WEBUI_PORT", os.getenv("API_PORT", "8000")))
 
-    print(f"正在启动 Web 服务: http://{host}:{port}")
-    print(f"API 文档: http://{host}:{port}/docs")
+    print(f"Starting Web Service: http://{host}:{port}")
+    print(f"API Documentation: http://{host}:{port}/docs")
     print()
 
     try:
@@ -47,13 +44,17 @@ def main() -> int:
             "api.app:app",
             host=host,
             port=port,
-            log_level="info",
+            log_level="info"
         )
+        return 0
     except KeyboardInterrupt:
-        pass
-
-    return 0
+        print("\nWeb service has been stopped.")
+        return 0
+    except Exception as e:
+        logger.exception(f"Web service startup failed: {e}")
+        return 1
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    import sys
+    sys.exit(main())

@@ -22,12 +22,12 @@ type ItemWithChecked = ExtractItem & { id: string; checked: boolean };
 
 function getConfidenceMeta(confidence: 'high' | 'medium' | 'low') {
   if (confidence === 'high') {
-    return { label: '高', badge: 'success' as const };
+    return { label: 'Alta', badge: 'success' as const };
   }
   if (confidence === 'low') {
-    return { label: '低', badge: 'warning' as const };
+    return { label: 'Baixa', badge: 'warning' as const };
   }
-  return { label: '中', badge: 'default' as const };
+  return { label: 'Média', badge: 'default' as const };
 }
 
 function normalizeConfidence(confidence?: string | null): 'high' | 'medium' | 'low' {
@@ -125,11 +125,11 @@ export const IntelligentImport: React.FC<IntelligentImportProps> = ({
     async (file: File) => {
       const ext = '.' + (file.name.split('.').pop() ?? '').toLowerCase();
       if (!IMG_EXT.includes(ext)) {
-        setError('图片仅支持 JPG、PNG、WebP、GIF');
+        setError('Somente as imagens nos formatos JPG, PNG, WebP e GIF são aceitos');
         return;
       }
       if (file.size > IMG_MAX) {
-        setError('图片不超过 5MB');
+        setError('Tamanho do Arquivo não pode exceder 5MB');
         return;
       }
       setError(null);
@@ -140,9 +140,9 @@ export const IntelligentImport: React.FC<IntelligentImportProps> = ({
       } catch (e) {
         const parsed = getParsedApiError(e);
         const err = e && typeof e === 'object' ? (e as { response?: { status?: number }; code?: string }) : null;
-        let fallback = '识别失败，请重试';
-        if (err?.response?.status === 429) fallback = '请求过于频繁，请稍后再试';
-        else if (err?.code === 'ECONNABORTED') fallback = '请求超时，请检查网络后重试';
+        let fallback = 'Reconhecimento falhou. Verifique e tente novamente';
+        if (err?.response?.status === 429) fallback = 'Muitas requisições sequenciais. Acalme as coisas...';
+        else if (err?.code === 'ECONNABORTED') fallback = 'Timeout da Requisição. Faltou internet?';
         setError(parsed.message || fallback);
       } finally {
         setIsLoading(false);
@@ -154,7 +154,7 @@ export const IntelligentImport: React.FC<IntelligentImportProps> = ({
   const handleDataFile = useCallback(
     async (file: File) => {
       if (file.size > FILE_MAX) {
-        setError('文件不超过 2MB');
+        setError('Arquivos menores de 2MB apenas');
         return;
       }
       setError(null);
@@ -164,7 +164,7 @@ export const IntelligentImport: React.FC<IntelligentImportProps> = ({
         addItems(res.items ?? res.codes.map((c) => ({ code: c, name: null, confidence: 'medium' })));
       } catch (e) {
         const parsed = getParsedApiError(e);
-        setError(parsed.message || '解析失败');
+        setError(parsed.message || 'Falha no parser do arquivo');
       } finally {
         setIsLoading(false);
       }
@@ -176,7 +176,7 @@ export const IntelligentImport: React.FC<IntelligentImportProps> = ({
     const t = pasteText.trim();
     if (!t) return;
     if (new Blob([t]).size > TEXT_MAX) {
-      setError('粘贴文本不超过 100KB');
+      setError('A transferência via Paste não aguenta mais que 100kb.');
       return;
     }
     setError(null);
@@ -189,7 +189,7 @@ export const IntelligentImport: React.FC<IntelligentImportProps> = ({
       })
       .catch((e) => {
         const parsed = getParsedApiError(e);
-        setError(parsed.message || '解析失败');
+        setError(parsed.message || 'Falha no parser do arquivo');
       })
       .finally(() => setIsLoading(false));
   }, [pasteText, addItems]);
@@ -255,7 +255,7 @@ export const IntelligentImport: React.FC<IntelligentImportProps> = ({
     const toMerge = items.filter((i) => i.checked && i.code).map((i) => i.code!);
     if (toMerge.length === 0) return;
     if (!configVersion) {
-      setError('请先加载配置后再合并');
+      setError('Aguarde as Definições do Sistema iniciarem');
       return;
     }
     const current = parseCurrentList();
@@ -277,9 +277,9 @@ export const IntelligentImport: React.FC<IntelligentImportProps> = ({
     } catch (e) {
       if (e instanceof SystemConfigConflictError) {
         await onMerged(value);
-        setError('配置已更新，请再次点击「合并到自选股」');
+        setError('Definições salvas. Selecione Mesclar Novamente');
       } else {
-        setError(e instanceof Error ? e.message : '合并保存失败');
+        setError(e instanceof Error ? e.message : 'Mescla obteve Falha');
       }
     } finally {
       setIsMerging(false);
@@ -292,9 +292,9 @@ export const IntelligentImport: React.FC<IntelligentImportProps> = ({
   return (
     <div className="space-y-4">
       <div className="settings-surface-panel settings-border-strong rounded-xl border p-4 shadow-soft-card">
-        <p className="text-sm font-medium text-foreground">支持图片、CSV/Excel 文件与剪贴板文本</p>
+        <p className="text-sm font-medium text-foreground">Suporte para Imagens, Arquivos CSV/Excel e Área de Transferência</p>
         <p className="mt-1 text-xs leading-5 text-secondary-text">
-          图片识别需预先配置 Vision 模型。建议先人工核对解析结果，再合并到自选股。
+          A IA usa Vision para ler as imagens. Aconselhamos testar a Imagem antes.
         </p>
       </div>
 
@@ -313,7 +313,7 @@ export const IntelligentImport: React.FC<IntelligentImportProps> = ({
             disabled={disabled || isLoading}
             onClick={() => openFilePicker(imageInputRef)}
           >
-            选择图片
+            Selecionar Imagem
           </Button>
           <input
             ref={imageInputRef}
@@ -329,7 +329,7 @@ export const IntelligentImport: React.FC<IntelligentImportProps> = ({
             disabled={disabled || isLoading}
             onClick={() => openFilePicker(dataFileInputRef)}
           >
-            选择文件
+            Selecionar Arquivo
           </Button>
           <input
             ref={dataFileInputRef}
@@ -342,7 +342,7 @@ export const IntelligentImport: React.FC<IntelligentImportProps> = ({
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <textarea
-            placeholder="或粘贴 CSV/Excel 复制的文本..."
+            placeholder="...Ou cole o Texto Exato do Clipboard..."
             className="input-surface settings-surface-strong settings-border-strong min-h-[72px] w-full rounded-xl border px-3 py-2 text-sm text-foreground shadow-none transition-colors placeholder:text-muted-text focus:outline-none"
             value={pasteText}
             onChange={(e) => setPasteText(e.target.value)}
@@ -355,12 +355,12 @@ export const IntelligentImport: React.FC<IntelligentImportProps> = ({
             onClick={handlePasteParse}
             disabled={disabled || isLoading || !pasteText.trim()}
           >
-            解析
+            Desconstruir
           </Button>
         </div>
       </div>
 
-      {isLoading && <p className="text-sm text-secondary-text">处理中...</p>}
+      {isLoading && <p className="text-sm text-secondary-text">Processando...</p>}
       {error && (
         <InlineAlert
           variant="danger"
@@ -373,22 +373,22 @@ export const IntelligentImport: React.FC<IntelligentImportProps> = ({
         <div className="space-y-2">
           <InlineAlert
             variant="warning"
-            message="建议人工逐条核对后再合并。高置信度默认勾选，中/低置信度需手动确认。"
+            message="Certifique-se de comparar e conferir as informações com as importadas."
             className="rounded-xl px-3 py-2 text-xs shadow-none"
           />
           <div className="flex items-center justify-between">
             <span className="text-xs text-secondary-text">
-              共 {validCount} 条可合并，已勾选 {checkedCount} 条
+              Total {validCount} com mescla. Sendo {checkedCount} aprovadas
             </span>
             <div className="flex gap-2">
               <button type="button" className="text-xs text-secondary-text transition-colors hover:text-foreground" onClick={() => toggleAll(true)}>
-                全选
+                Selecionar tudo
               </button>
               <button type="button" className="text-xs text-secondary-text transition-colors hover:text-foreground" onClick={() => toggleAll(false)}>
-                取消
+                Cancelar
               </button>
               <button type="button" className="text-xs text-secondary-text transition-colors hover:text-foreground" onClick={clearAll}>
-                清空
+                Limpar
               </button>
             </div>
           </div>
@@ -412,7 +412,7 @@ export const IntelligentImport: React.FC<IntelligentImportProps> = ({
                     className="settings-input-checkbox h-4 w-4 rounded border-border/70 bg-base"
                   />
                   <span className={it.code ? 'font-medium text-foreground' : 'font-medium text-danger'}>
-                    {it.code || '解析失败'}
+                    {it.code || 'Desconstrução Falhou'}
                   </span>
                   {it.name && <span className="text-secondary-text">({it.name})</span>}
                   <div className="ml-auto flex items-center gap-2">
@@ -439,7 +439,7 @@ export const IntelligentImport: React.FC<IntelligentImportProps> = ({
             onClick={() => void mergeToWatchlist()}
             disabled={disabled || isMerging || checkedCount === 0}
           >
-            {isMerging ? '保存中...' : '合并到自选股'}
+            {isMerging ? 'Gravando...' : 'Fazer o Merge em Stock Pool'}
           </Button>
         </div>
       )}

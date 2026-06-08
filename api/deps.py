@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-API 依赖注入模块
+Módulo de Injeção de Dependência da API
 ===================================
 
-职责：
-1. 提供数据库 Session 依赖
-2. 提供配置依赖
-3. 提供服务层依赖
+Responsabilidades:
+1. Fornecer dependência de Session do banco de dados
+2. Fornecer dependência de configuração
+3. Fornecer dependência da camada de serviço
 """
 
 from typing import Generator
@@ -22,14 +22,14 @@ from src.services.system_config_service import SystemConfigService
 
 def get_db() -> Generator[Session, None, None]:
     """
-    获取数据库 Session 依赖
+    Obtém a dependência de Session do banco de dados
     
-    使用 FastAPI 依赖注入机制，确保请求结束后自动关闭 Session
+    Utiliza o mecanismo de injeção de dependência do FastAPI para garantir que a Session seja fechada automaticamente após o término da requisição
     
     Yields:
-        Session: SQLAlchemy Session 对象
+        Session: Objeto Session do SQLAlchemy
         
-    Example:
+    Exemplo:
         @router.get("/items")
         async def get_items(db: Session = Depends(get_db)):
             ...
@@ -44,26 +44,26 @@ def get_db() -> Generator[Session, None, None]:
 
 def get_config_dep() -> Config:
     """
-    获取配置依赖
+    Obtém a dependência de configuração
     
     Returns:
-        Config: 配置单例对象
+        Config: Objeto singleton de configuração
     """
     return get_config()
 
 
 def get_database_manager() -> DatabaseManager:
     """
-    获取数据库管理器依赖
+    Obtém a dependência do gerenciador de banco de dados
     
     Returns:
-        DatabaseManager: 数据库管理器单例对象
+        DatabaseManager: Objeto singleton do gerenciador de banco de dados
     """
     return DatabaseManager.get_instance()
 
 
 def get_system_config_service(request: Request) -> SystemConfigService:
-    """Get app-lifecycle shared SystemConfigService instance."""
+    """Obtém a instância compartilhada do SystemConfigService no ciclo de vida da aplicação."""
     service = getattr(request.app.state, "system_config_service", None)
     if service is None:
         service = SystemConfigService()
