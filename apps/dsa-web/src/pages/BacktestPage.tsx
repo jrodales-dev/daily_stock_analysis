@@ -1,624 +1,322 @@
 import type React from 'react';
-import { useState, useEffect, useCallback } from 'react';
-import { Check, Minus, X } from 'lucide-react';
-import { backtestApi } from '../api/backtest';
-import type { ParsedApiError } from '../api/error';
+import { useState, useEffect, useRef } from 'react';
+import { Play, Activity, TrendingUp, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import { backtestApi, type BacktestResultMetrics, type BacktestRequest } from '../api/backtest';
 import { getParsedApiError } from '../api/error';
-import { ApiErrorAlert, Card, Badge, EmptyState, Pagination, StatusDot, Tooltip } from '../components/common';
-import type {
-  BacktestResultItem,
-  BacktestRunResponse,
-  PerformanceMetrics,
-} from '../types/backtest';
+import { Card, PageHeader, Input, Select, Button } from '../components/common';
 
-const BACKTEST_INPUT_CLASS =
-  'input-surface input-focus-glow h-11 w-full rounded-xl border bg-transparent px-4 text-sm transition-all focus:outline-none disabled:cursor-not-allowed disabled:opacity-60';
-const BACKTEST_COMPACT_INPUT_CLASS =
-  'input-surface input-focus-glow h-10 rounded-xl border bg-transparent px-3 py-2 text-xs transition-all focus:outline-none disabled:cursor-not-allowed disabled:opacity-60';
-
-// ============ Helpers ============
-
-function pct(value?: number | null): string {
-  if (value == null) return '--';
-  return `${value.toFixed(1)}%`;
+function formatMoney(val: number) {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
 }
 
-const OUTCOME_LABELS: Record<string, string> = {
-  win: 'Win',
-  loss: 'Loss',
-  neutral: 'Neutral',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  completed: 'Completed',
-  insufficient: 'Insufficient Data',
-  insufficient_data: 'Insufficient Data',
-  error: 'Error',
-};
-
-const MOVEMENT_LABELS: Record<string, string> = {
-  up: 'Up',
-  down: 'Down',
-  flat: 'Flat',
-};
-
-const DIRECTION_EXPECTED_LABELS: Record<string, string> = {
-  long: 'Long',
-  cash: 'Cash',
-  up: 'Bullish',
-  down: 'Bearish',
-  not_down: 'Not Bearish',
-  flat: 'Flat',
-};
-
-function labelFromMap(value: string | null | undefined, labels: Record<string, string>): string {
-  if (!value) return '--';
-  return labels[value] ?? value;
+function formatPct(val: number) {
+  const sign = val > 0 ? '+' : '';
+  return `${sign}${val.toFixed(2)}%`;
 }
 
-function outcomeBadge(outcome?: string) {
-  if (!outcome) return <Badge variant="default">--</Badge>;
-  switch (outcome) {
-    case 'win':
-      return <Badge variant="success" glow>{OUTCOME_LABELS.win}</Badge>;
-    case 'loss':
-      return <Badge variant="danger" glow>{OUTCOME_LABELS.loss}</Badge>;
-    case 'neutral':
-      return <Badge variant="warning">{OUTCOME_LABELS.neutral}</Badge>;
-    default:
-      return <Badge variant="default">{outcome}</Badge>;
-  }
-}
-
-function statusBadge(status: string) {
-  switch (status) {
-    case 'completed':
-      return <Badge variant="success">{STATUS_LABELS.completed}</Badge>;
-    case 'insufficient':
-    case 'insufficient_data':
-      return <Badge variant="warning">{STATUS_LABELS.insufficient}</Badge>;
-    case 'error':
-      return <Badge variant="danger">{STATUS_LABELS.error}</Badge>;
-    default:
-      return <Badge variant="default">{status}</Badge>;
-  }
-}
-
-function actualMovementBadge(movement?: string | null) {
-  switch (movement) {
-    case 'up':
-      return <Badge variant="success">{MOVEMENT_LABELS.up}</Badge>;
-    case 'down':
-      return <Badge variant="danger">{MOVEMENT_LABELS.down}</Badge>;
-    case 'flat':
-      return <Badge variant="warning">{MOVEMENT_LABELS.flat}</Badge>;
-    default:
-      return <Badge variant="default">--</Badge>;
-  }
-}
-
-function boolIcon(value?: boolean | null) {
-  if (value === true) {
-    return (
-      <span
-        className="backtest-status-chip backtest-status-chip-success"
-        aria-label="Yes"
-      >
-        <StatusDot tone="success" className="backtest-status-chip-dot" />
-        <Check className="h-3.5 w-3.5" />
-      </span>
-    );
-  }
-
-  if (value === false) {
-    return (
-      <span
-        className="backtest-status-chip backtest-status-chip-danger"
-        aria-label="No"
-      >
-        <StatusDot tone="danger" className="backtest-status-chip-dot" />
-        <X className="h-3.5 w-3.5" />
-      </span>
-    );
-  }
-
-  return (
-    <span
-      className="backtest-status-chip backtest-status-chip-neutral"
-      aria-label="Unknown"
-    >
-      <StatusDot tone="neutral" className="backtest-status-chip-dot" />
-      <Minus className="h-3.5 w-3.5" />
-    </span>
-  );
-}
-
-// ============ Metric Row ============
-
-const MetricRow: React.FC<{ label: string; value: string; accent?: boolean }> = ({ label, value, accent }) => (
-  <div className="backtest-metric-row">
-    <span className="label">{label}</span>
-    <span className={`value ${accent ? 'accent' : ''}`}>{value}</span>
-  </div>
-);
-
-// ============ Performance Card ============
-
-const PerformanceCard: React.FC<{ metrics: PerformanceMetrics; title: string }> = ({ metrics, title }) => (
-  <Card variant="gradient" padding="md" className="animate-fade-in">
-    <div className="mb-3">
-      <span className="label-uppercase">{title}</span>
-    </div>
-    <MetricRow label="Direction Accuracy" value={pct(metrics.directionAccuracyPct)} accent />
-    <MetricRow label="Win Rate" value={pct(metrics.winRatePct)} accent />
-    <MetricRow label="Avg Simulated Return" value={pct(metrics.avgSimulatedReturnPct)} />
-    <MetricRow label="Avg Stock Return" value={pct(metrics.avgStockReturnPct)} />
-    <MetricRow label="Stop Loss Rate" value={pct(metrics.stopLossTriggerRate)} />
-    <MetricRow label="Take Profit Rate" value={pct(metrics.takeProfitTriggerRate)} />
-    <MetricRow label="Avg Days to Hit" value={metrics.avgDaysToFirstHit != null ? metrics.avgDaysToFirstHit.toFixed(1) : '--'} />
-    <div className="backtest-metric-footer">
-      <span className="text-xs text-muted-text">Evaluations</span>
-      <span className="text-xs text-secondary-text font-mono">
-        {Number(metrics.completedCount)} / {Number(metrics.totalEvaluations)}
-      </span>
-    </div>
-    <div className="flex items-center justify-between">
-      <span className="text-xs text-muted-text">Win / Loss / Neutral</span>
-      <span className="text-xs font-mono">
-        <span className="text-success">{metrics.winCount}</span>
-        {' / '}
-        <span className="text-danger">{metrics.lossCount}</span>
-        {' / '}
-        <span className="text-warning">{metrics.neutralCount}</span>
-      </span>
-    </div>
-  </Card>
-);
-
-// ============ Run Summary ============
-
-const RunSummary: React.FC<{ data: BacktestRunResponse }> = ({ data }) => (
-  <div className="backtest-summary animate-fade-in">
-    <span className="label">Processed: <span className="value">{data.processed}</span></span>
-    <span className="label">Saved: <span className="value primary">{data.saved}</span></span>
-    <span className="label">Completed: <span className="value success">{data.completed}</span></span>
-    <span className="label">Insufficient: <span className="value warning">{data.insufficient}</span></span>
-    {data.errors > 0 && (
-      <span className="label">Error: <span className="value danger">{data.errors}</span></span>
-    )}
-  </div>
-);
-
-// ============ Main Page ============
-
-const BacktestPage: React.FC = () => {
-  // Set page title
+export const BacktestPage: React.FC = () => {
   useEffect(() => {
-    document.title = 'Strategy Backtest - DSA';
+    document.title = 'Backtesting Engine - DSA';
   }, []);
 
-  // Input state
-  const [codeFilter, setCodeFilter] = useState('');
-  const [analysisDateFrom, setAnalysisDateFrom] = useState('');
-  const [analysisDateTo, setAnalysisDateTo] = useState('');
-  const [evalDays, setEvalDays] = useState('');
-  const [forceRerun, setForceRerun] = useState(false);
+  const [ticker, setTicker] = useState('AAPL');
+  const [days, setDays] = useState(365);
+  const [techWeight, setTechWeight] = useState(70);
+  const [sentWeight, setSentWeight] = useState(30);
+  const [mockSentiment, setMockSentiment] = useState('neutral');
+
+  const [taskId, setTaskId] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
-  const [runResult, setRunResult] = useState<BacktestRunResponse | null>(null);
-  const [runError, setRunError] = useState<ParsedApiError | null>(null);
-  const [pageError, setPageError] = useState<ParsedApiError | null>(null);
+  const [statusText, setStatusText] = useState('');
+  const [result, setResult] = useState<BacktestResultMetrics | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Results state
-  const [results, setResults] = useState<BacktestResultItem[]>([]);
-  const [totalResults, setTotalResults] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isLoadingResults, setIsLoadingResults] = useState(false);
-  const pageSize = 20;
+  const pollInterval = useRef<number | ReturnType<typeof setInterval> | null>(null);
 
-  // Performance state
-  const [overallPerf, setOverallPerf] = useState<PerformanceMetrics | null>(null);
-  const [stockPerf, setStockPerf] = useState<PerformanceMetrics | null>(null);
-  const [isLoadingPerf, setIsLoadingPerf] = useState(false);
-  const effectiveWindowDays = evalDays ? parseInt(evalDays, 10) : overallPerf?.evalWindowDays;
-  const isNextDayValidation = effectiveWindowDays === 1;
-  const showNextDayActualColumns = isNextDayValidation;
-
-  // Fetch results
-  const fetchResults = useCallback(async (
-    page = 1,
-    code?: string,
-    windowDays?: number,
-    startDate?: string,
-    endDate?: string,
-  ) => {
-    setIsLoadingResults(true);
-    try {
-      const response = await backtestApi.getResults({
-        code: code || undefined,
-        evalWindowDays: windowDays,
-        analysisDateFrom: startDate || undefined,
-        analysisDateTo: endDate || undefined,
-        page,
-        limit: pageSize,
-      });
-      setResults(response.items);
-      setTotalResults(response.total);
-      setCurrentPage(response.page);
-      setPageError(null);
-    } catch (err) {
-      console.error('Failed to fetch backtest results:', err);
-      setPageError(getParsedApiError(err));
-    } finally {
-      setIsLoadingResults(false);
-    }
-  }, []);
-
-  // Fetch performance
-  const fetchPerformance = useCallback(async (
-    code?: string,
-    windowDays?: number,
-    startDate?: string,
-    endDate?: string,
-  ) => {
-    setIsLoadingPerf(true);
-    try {
-      const overall = await backtestApi.getOverallPerformance({
-        evalWindowDays: windowDays,
-        analysisDateFrom: startDate || undefined,
-        analysisDateTo: endDate || undefined,
-      });
-      setOverallPerf(overall);
-
-      if (code) {
-        const stock = await backtestApi.getStockPerformance(code, {
-          evalWindowDays: windowDays,
-          analysisDateFrom: startDate || undefined,
-          analysisDateTo: endDate || undefined,
-        });
-        setStockPerf(stock);
-      } else {
-        setStockPerf(null);
+  const startPolling = (tid: string) => {
+    if (pollInterval.current) clearInterval(pollInterval.current);
+    pollInterval.current = setInterval(async () => {
+      try {
+        const res = await backtestApi.getStatus(tid);
+        if (res.status === 'SUCCESS') {
+          setIsRunning(false);
+          setStatusText('Concluído!');
+          clearInterval(pollInterval.current!);
+          if (res.result && !('error' in res.result)) {
+            setResult(res.result as BacktestResultMetrics);
+          } else {
+            setError((res.result as any)?.error || 'Erro desconhecido ao obter resultados');
+          }
+        } else if (res.status === 'FAILED') {
+          setIsRunning(false);
+          setStatusText('Falhou');
+          clearInterval(pollInterval.current!);
+          setError((res.result as any)?.error || 'A tarefa falhou');
+        } else {
+          setStatusText(`Executando... (${res.status})`);
+        }
+      } catch (err: any) {
+        setIsRunning(false);
+        setStatusText('Erro');
+        clearInterval(pollInterval.current!);
+        setError(getParsedApiError(err).message);
       }
-      setPageError(null);
-    } catch (err) {
-      console.error('Failed to fetch performance:', err);
-      setPageError(getParsedApiError(err));
-    } finally {
-      setIsLoadingPerf(false);
-    }
-  }, []);
+    }, 2000);
+  };
 
-  // Initial load — fetch performance first, then filter results by its window
   useEffect(() => {
-    const init = async () => {
-      // Get latest performance (unfiltered returns most recent summary)
-      const overall = await backtestApi.getOverallPerformance();
-      setOverallPerf(overall);
-      // Use the summary's eval_window_days to filter results consistently
-      const windowDays = overall?.evalWindowDays;
-      if (windowDays && !evalDays) {
-        setEvalDays(String(windowDays));
-      }
-      fetchResults(1, undefined, windowDays, undefined, undefined);
+    return () => {
+      if (pollInterval.current) clearInterval(pollInterval.current);
     };
-    init();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Run backtest
-  const handleRun = async () => {
+  const handleRun = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ticker.trim()) return;
+
     setIsRunning(true);
-    setRunResult(null);
-    setRunError(null);
+    setResult(null);
+    setError(null);
+    setTaskId(null);
+    setStatusText('Iniciando...');
+
     try {
-      const code = codeFilter.trim() || undefined;
-      const evalWindowDays = evalDays ? parseInt(evalDays, 10) : undefined;
-      const response = await backtestApi.run({
-        code,
-        force: forceRerun || undefined,
-        minAgeDays: forceRerun ? 0 : undefined,
-        evalWindowDays,
-      });
-      setRunResult(response);
-      // Refresh data with same eval_window_days
-      fetchResults(1, codeFilter.trim() || undefined, evalWindowDays, analysisDateFrom, analysisDateTo);
-      fetchPerformance(codeFilter.trim() || undefined, evalWindowDays, analysisDateFrom, analysisDateTo);
-    } catch (err) {
-      setRunError(getParsedApiError(err));
-    } finally {
+      const payload: BacktestRequest = {
+        ticker: ticker.toUpperCase(),
+        days: days,
+        technicalWeight: techWeight / 100,
+        sentimentWeight: sentWeight / 100,
+        mockSentiment: mockSentiment,
+      };
+      const res = await backtestApi.run(payload);
+      setTaskId(res.taskId);
+      startPolling(res.taskId);
+    } catch (err: any) {
       setIsRunning(false);
+      setError(getParsedApiError(err).message);
+      setStatusText('Falhou ao iniciar');
     }
-  };
-
-  // Filter by code
-  const handleFilter = () => {
-    const code = codeFilter.trim() || undefined;
-    const windowDays = evalDays ? parseInt(evalDays, 10) : undefined;
-    setCurrentPage(1);
-    fetchResults(1, code, windowDays, analysisDateFrom, analysisDateTo);
-    fetchPerformance(code, windowDays, analysisDateFrom, analysisDateTo);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleFilter();
-    }
-  };
-
-  const handleShowNextDay = () => {
-    const code = codeFilter.trim() || undefined;
-    setEvalDays('1');
-    setCurrentPage(1);
-    fetchResults(1, code, 1, analysisDateFrom, analysisDateTo);
-    fetchPerformance(code, 1, analysisDateFrom, analysisDateTo);
-  };
-
-  // Pagination
-  const totalPages = Math.ceil(totalResults / pageSize);
-  const handlePageChange = (page: number) => {
-    const windowDays = evalDays ? parseInt(evalDays, 10) : undefined;
-    fetchResults(page, codeFilter.trim() || undefined, windowDays, analysisDateFrom, analysisDateTo);
   };
 
   return (
-    <div className="min-h-full flex flex-col rounded-[1.5rem] bg-transparent">
-      {/* Header */}
-      <header className="flex-shrink-0 border-b border-white/5 px-3 py-3 sm:px-4">
-        <div className="flex max-w-5xl flex-wrap items-center gap-2">
-          <div className="relative min-w-0 flex-[1_1_220px]">
-            <input
-              type="text"
-              value={codeFilter}
-              onChange={(e) => setCodeFilter(e.target.value.toUpperCase())}
-              onKeyDown={handleKeyDown}
-              placeholder="Filter by symbol (leave empty for all)"
-              disabled={isRunning}
-              className={BACKTEST_INPUT_CLASS}
-            />
-          </div>
-          <button
-            type="button"
-            onClick={handleFilter}
-            disabled={isLoadingResults}
-            className="btn-secondary flex items-center gap-1.5 whitespace-nowrap"
-          >
-            Filter
-          </button>
-          <div className="flex items-center gap-2 whitespace-nowrap lg:w-40 lg:justify-between">
-            <span className="text-xs text-muted-text">Eval Window</span>
-            <input
-              type="number"
-              min={1}
-              max={120}
-              value={evalDays}
-              onChange={(e) => setEvalDays(e.target.value)}
-              placeholder="10"
-              disabled={isRunning}
-              className={`${BACKTEST_COMPACT_INPUT_CLASS} w-24 text-center tabular-nums`}
-            />
-          </div>
-          <div className="flex items-center gap-2 whitespace-nowrap">
-            <span className="text-xs text-muted-text">Start Date</span>
-            <input
-              type="date"
-              aria-label="Analysis start date"
-              value={analysisDateFrom}
-              onChange={(e) => setAnalysisDateFrom(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isRunning}
-              className={`${BACKTEST_COMPACT_INPUT_CLASS} w-40 text-center tabular-nums`}
-            />
-          </div>
-          <div className="flex items-center gap-2 whitespace-nowrap">
-            <span className="text-xs text-muted-text">End Date</span>
-            <input
-              type="date"
-              aria-label="Analysis end date"
-              value={analysisDateTo}
-              onChange={(e) => setAnalysisDateTo(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isRunning}
-              className={`${BACKTEST_COMPACT_INPUT_CLASS} w-40 text-center tabular-nums`}
-            />
-          </div>
-          <button
-            type="button"
-            onClick={handleShowNextDay}
-            disabled={isLoadingResults || isLoadingPerf}
-            className={`backtest-force-btn ${isNextDayValidation ? 'active' : ''}`}
-          >
-            <span className="dot" />
-            1-Day Validate
-          </button>
-          <button
-            type="button"
-            onClick={() => setForceRerun(!forceRerun)}
-            disabled={isRunning}
-            className={`backtest-force-btn ${forceRerun ? 'active' : ''}`}
-          >
-            <span className="dot" />
-            Force Rerun
-          </button>
-          <button
-            type="button"
-            onClick={handleRun}
-            disabled={isRunning}
-            className="btn-primary flex items-center gap-1.5 whitespace-nowrap"
-          >
-            {isRunning ? (
-              <>
-                <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                Running...
-              </>
-            ) : (
-              'Run Backtest'
-            )}
-          </button>
-        </div>
-        {runResult && (
-          <div className="mt-2 max-w-4xl">
-            <RunSummary data={runResult} />
-          </div>
-        )}
-        {runError && (
-          <ApiErrorAlert error={runError} className="mt-2 max-w-4xl" />
-        )}
-        <p className="mt-2 text-xs text-muted-text">
-          {isNextDayValidation
-            ? "1-Day validation uses the next trading day's close to verify AI predictions."
-            : "Set Eval Window to 1 to view the match between AI predictions and next day's close."}
-        </p>
-      </header>
+    <div className="min-h-screen space-y-6 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+      <PageHeader
+        title="Motor de Backtesting"
+        description="Avalie a performance de estratégias (Técnica + Sentimento) no histórico de preços usando Celery e Pandas."
+      />
 
-      {/* Main content */}
-      <main className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-3 lg:flex-row">
-        {/* Left sidebar - Performance */}
-        <div className="flex max-h-[38vh] flex-col gap-3 overflow-y-auto lg:max-h-none lg:w-60 lg:flex-shrink-0">
-          {isLoadingPerf ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="backtest-spinner sm" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Formulário */}
+        <Card className="p-5 lg:col-span-1">
+          <form onSubmit={handleRun} className="space-y-4">
+            <h2 className="text-lg font-semibold text-foreground mb-4">Configuração</h2>
+            
+            <div>
+              <label className="block text-sm text-secondary-text mb-1">Ticker</label>
+              <Input
+                value={ticker}
+                onChange={(e) => setTicker(e.target.value)}
+                placeholder="Ex: AAPL"
+                disabled={isRunning}
+                required
+              />
             </div>
-          ) : overallPerf ? (
-            <PerformanceCard metrics={overallPerf} title="Overall Performance" />
-          ) : (
-            <EmptyState
-              title="No Metrics"
-              description="Run backtest to generate portfolio-level metrics."
-              className="h-full min-h-[12rem] border-dashed bg-card/45 shadow-none"
-            />
-          )}
 
-          {stockPerf && (
-            <PerformanceCard metrics={stockPerf} title={`${stockPerf.code || codeFilter}`} />
-          )}
-        </div>
-
-        {/* Right content - Results table */}
-        <section className="min-h-0 flex-1 overflow-y-auto">
-          {pageError ? (
-            <ApiErrorAlert error={pageError} className="mb-3" />
-          ) : null}
-          {isLoadingResults ? (
-            <div className="flex flex-col items-center justify-center h-64">
-              <div className="backtest-spinner md" />
-              <p className="mt-3 text-secondary-text text-sm">Loading results...</p>
+            <div>
+              <label className="block text-sm text-secondary-text mb-1">Período (Dias Históricos)</label>
+              <Input
+                type="number"
+                value={days}
+                onChange={(e) => setDays(Number(e.target.value))}
+                min={50}
+                disabled={isRunning}
+                required
+              />
+              <p className="text-xs text-muted-text mt-1">Mínimo 50 dias para cálculo da SMA50.</p>
             </div>
-          ) : results.length === 0 ? (
-            <EmptyState
-              title="No Results"
-              description="Run backtest to evaluate historical analysis accuracy."
-              className="backtest-empty-state border-dashed"
-              icon={(
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              )}
-            />
-          ) : (
-            <div className="animate-fade-in">
-              <div className="backtest-table-toolbar">
-                <div className="backtest-table-toolbar-meta">
-                  <span className="label-uppercase">{isNextDayValidation ? 'Next-Day Validation' : 'Result Set'}</span>
-                  <span className="text-xs text-secondary-text">
-                    {codeFilter.trim() ? `Filter ${codeFilter.trim()}` : 'All Stocks'}
-                    {evalDays ? ` · ${evalDays}-Day Window` : ''}
-                    {analysisDateFrom ? ` · From ${analysisDateFrom}` : ''}
-                    {analysisDateTo ? ` · To ${analysisDateTo}` : ''}
-                  </span>
-                </div>
-                <span className="backtest-table-scroll-hint">Scroll horizontally on small screens</span>
-              </div>
-              <div className="backtest-table-wrapper">
-                <table className="backtest-table min-w-[840px] w-full text-sm">
-                  <thead className="backtest-table-head">
-                    <tr className="text-left">
-                      <th className="backtest-table-head-cell">Stock</th>
-                      <th className="backtest-table-head-cell">Analysis Date</th>
-                      <th className="backtest-table-head-cell">AI Prediction</th>
-                      <th className="backtest-table-head-cell">
-                        {showNextDayActualColumns ? 'Actual Return' : 'Window Return'}
-                      </th>
-                      <th className="backtest-table-head-cell">
-                        {showNextDayActualColumns ? 'Accuracy' : 'Direction Match'}
-                      </th>
-                      <th className="backtest-table-head-cell">Result</th>
-                      <th className="backtest-table-head-cell">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {results.map((row) => (
-                      <tr
-                        key={row.analysisHistoryId}
-                        className="backtest-table-row"
-                      >
-                        <td className="backtest-table-cell backtest-table-code">
-                          <div className="flex flex-col">
-                            <span>{row.code}</span>
-                            <span className="text-xs text-muted-text">{row.stockName || '--'}</span>
-                          </div>
-                        </td>
-                        <td className="backtest-table-cell text-secondary-text">{row.analysisDate || '--'}</td>
-                        <td className="backtest-table-cell max-w-[220px] text-foreground">
-                          {(row.trendPrediction || row.operationAdvice) ? (
-                            <Tooltip
-                              content={[row.trendPrediction, row.operationAdvice].filter(Boolean).join(' / ')}
-                              focusable
-                            >
-                              <div className="flex flex-col gap-1">
-                                <span className="block truncate">{row.trendPrediction || '--'}</span>
-                                <span className="block truncate text-xs text-secondary-text">{row.operationAdvice || '--'}</span>
-                              </div>
-                            </Tooltip>
-                          ) : (
-                            '--'
-                          )}
-                        </td>
-                        <td className="backtest-table-cell">
-                          <div className="flex items-center gap-2">
-                            {actualMovementBadge(row.actualMovement)}
-                            <span className={
-                              row.actualReturnPct != null
-                                ? row.actualReturnPct > 0 ? 'text-success' : row.actualReturnPct < 0 ? 'text-danger' : 'text-secondary-text'
-                                : 'text-muted-text'
-                            }>
-                              {pct(row.actualReturnPct)}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="backtest-table-cell">
-                          <span className="flex items-center gap-2">
-                            {boolIcon(row.directionCorrect)}
-                            <span className="text-muted-text">
-                              {row.directionExpected ? labelFromMap(row.directionExpected, DIRECTION_EXPECTED_LABELS) : ''}
-                            </span>
-                          </span>
-                        </td>
-                        <td className="backtest-table-cell">{outcomeBadge(row.outcome)}</td>
-                        <td className="backtest-table-cell">{statusBadge(row.evalStatus)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
 
-              {/* Pagination */}
-              <div className="mt-4">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={handlePageChange}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm text-secondary-text mb-1">Peso Técnico (%)</label>
+                <Input
+                  type="number"
+                  value={techWeight}
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    setTechWeight(v);
+                    setSentWeight(100 - v);
+                  }}
+                  min={0}
+                  max={100}
+                  disabled={isRunning}
                 />
               </div>
+              <div>
+                <label className="block text-sm text-secondary-text mb-1">Peso Sentimento (%)</label>
+                <Input
+                  type="number"
+                  value={sentWeight}
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    setSentWeight(v);
+                    setTechWeight(100 - v);
+                  }}
+                  min={0}
+                  max={100}
+                  disabled={isRunning}
+                />
+              </div>
+            </div>
 
-              <p className="text-xs text-muted-text text-center mt-2">
-                {totalResults} Results · Page {currentPage} of {Math.max(totalPages, 1)}
-              </p>
+            <div>
+              <label className="block text-sm text-secondary-text mb-1">Sentimento Base (Mock)</label>
+              <Select
+                value={mockSentiment}
+                onChange={setMockSentiment}
+                options={[
+                  { value: 'bullish', label: 'Bullish (+1.0)' },
+                  { value: 'somewhat_bullish', label: 'Somewhat Bullish (+0.5)' },
+                  { value: 'neutral', label: 'Neutral (0.0)' },
+                  { value: 'somewhat_bearish', label: 'Somewhat Bearish (-0.5)' },
+                  { value: 'bearish', label: 'Bearish (-1.0)' },
+                ]}
+                disabled={isRunning}
+              />
+              <p className="text-xs text-muted-text mt-1">Aplicado ao período histórico completo.</p>
+            </div>
+
+            <Button
+              type="submit"
+              variant="primary"
+              className="w-full mt-4"
+              disabled={isRunning}
+            >
+              {isRunning ? (
+                <>
+                  <Activity className="w-4 h-4 mr-2 animate-spin" />
+                  {statusText}
+                </>
+              ) : (
+                <>
+                  <Play className="w-4 h-4 mr-2" />
+                  Rodar Backtest
+                </>
+              )}
+            </Button>
+          </form>
+
+          {error && (
+            <div className="mt-4 p-3 bg-danger/10 border border-danger/20 rounded-xl flex items-start gap-2">
+              <AlertTriangle className="w-5 h-5 text-danger shrink-0 mt-0.5" />
+              <p className="text-sm text-danger-text">{error}</p>
             </div>
           )}
-        </section>
-      </main>
+        </Card>
+
+        {/* Resultados */}
+        <div className="lg:col-span-2 space-y-6">
+          {!result && !isRunning && !error && (
+            <Card className="h-full min-h-[300px] flex flex-col items-center justify-center p-8 border-dashed bg-card/40">
+              <Activity className="w-12 h-12 text-muted-text mb-4 opacity-50" />
+              <p className="text-secondary-text text-center">
+                Configure os parâmetros ao lado e rode um backtest para ver a performance simulada da estratégia.
+              </p>
+            </Card>
+          )}
+
+          {isRunning && !result && (
+            <Card className="h-full min-h-[300px] flex flex-col items-center justify-center p-8 bg-card/40">
+              <div className="relative w-16 h-16 mb-6">
+                <div className="absolute inset-0 border-4 border-primary/20 rounded-full"></div>
+                <div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              </div>
+              <h3 className="text-lg font-medium text-foreground mb-2">Simulando Estratégia...</h3>
+              <p className="text-sm text-secondary-text">Processando {days} dias de histórico para {ticker.toUpperCase()}</p>
+              <p className="text-xs text-muted-text mt-4 font-mono">Task ID: {taskId}</p>
+            </Card>
+          )}
+
+          {result && (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <Card className="p-4 flex flex-col items-center justify-center text-center">
+                  <p className="text-xs text-secondary-text uppercase tracking-wider mb-1">Retorno Total</p>
+                  <p className={`text-2xl font-bold ${result.total_return_pct >= 0 ? 'text-success' : 'text-danger'}`}>
+                    {formatPct(result.total_return_pct)}
+                  </p>
+                </Card>
+                <Card className="p-4 flex flex-col items-center justify-center text-center">
+                  <p className="text-xs text-secondary-text uppercase tracking-wider mb-1">Retorno Anualizado</p>
+                  <p className={`text-2xl font-bold ${result.annualized_return_pct >= 0 ? 'text-success' : 'text-danger'}`}>
+                    {formatPct(result.annualized_return_pct)}
+                  </p>
+                </Card>
+                <Card className="p-4 flex flex-col items-center justify-center text-center">
+                  <p className="text-xs text-secondary-text uppercase tracking-wider mb-1">Win Rate</p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {result.win_rate_pct.toFixed(1)}%
+                  </p>
+                </Card>
+                <Card className="p-4 flex flex-col items-center justify-center text-center">
+                  <p className="text-xs text-secondary-text uppercase tracking-wider mb-1">Max Drawdown</p>
+                  <p className="text-2xl font-bold text-danger">
+                    {formatPct(result.max_drawdown_pct)}
+                  </p>
+                </Card>
+              </div>
+
+              <Card className="p-6 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-32 bg-primary/5 blur-3xl rounded-full -translate-y-1/2 translate-x-1/3"></div>
+                <h3 className="text-lg font-semibold text-foreground mb-4 relative z-10 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                  Resumo da Simulação ({result.ticker})
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center py-2 border-b border-white/5">
+                      <span className="text-secondary-text">Capital Inicial</span>
+                      <span className="font-mono">{formatMoney(result.initial_capital)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-white/5">
+                      <span className="text-secondary-text">Patrimônio Final</span>
+                      <span className="font-mono font-medium text-foreground">{formatMoney(result.final_equity)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-white/5">
+                      <span className="text-secondary-text">Total de Trades</span>
+                      <span className="font-mono">{result.total_trades}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center py-2 border-b border-white/5">
+                      <span className="text-secondary-text">Dias Analisados</span>
+                      <span className="font-mono">{result.days_analyzed}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-white/5">
+                      <span className="text-secondary-text">Sharpe Ratio</span>
+                      <span className={`font-mono font-medium ${result.sharpe_ratio >= 1 ? 'text-success' : 'text-foreground'}`}>
+                        {result.sharpe_ratio.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-white/5">
+                      <span className="text-secondary-text">Performance vs Buy & Hold</span>
+                      <span className="font-mono flex items-center gap-1">
+                        {result.total_return_pct > 0 ? (
+                          <CheckCircle2 className="w-4 h-4 text-success" />
+                        ) : (
+                          <XCircle className="w-4 h-4 text-danger" />
+                        )}
+                        Pendente
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

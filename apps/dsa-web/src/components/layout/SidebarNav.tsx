@@ -26,9 +26,11 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { key: 'home', label: 'Início', to: '/', icon: Home, exact: true },
+  { key: 'market', label: 'Mercado', to: '/market', icon: BarChart3 },
   { key: 'chat', label: 'Chat', to: '/chat', icon: MessageSquareQuote, badge: 'completion' },
   { key: 'screening', label: 'Triagem', to: '/screening', icon: Search },
-  { key: 'portfolio', label: 'Portfólio', to: '/portfolio', icon: BriefcaseBusiness },
+  { key: 'portfolio', label: 'Portfólio (Alpaca)', to: '/portfolio', icon: BriefcaseBusiness },
+  { key: 'portfolio_legacy', label: 'Portfólio (Manual)', to: '/portfolio-legacy', icon: BriefcaseBusiness },
   { key: 'backtest', label: 'Backtest', to: '/backtest', icon: BarChart3 },
   { key: 'alerts', label: 'Alertas', to: '/alerts', icon: Bell },
   { key: 'settings', label: 'Configurações', to: '/settings', icon: Settings2 },

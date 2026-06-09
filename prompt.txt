@@ -1,0 +1,78 @@
+<USER_REQUEST>
+Você é um engenheiro de software sênior especializado em sistemas financeiros e arquitetura de APIs. Você recebeu a tarefa de transformar radicalmente o repositório atual, que é um script monolítico de análise diária de ações, que no momento usa apenas yfinance e indicadores técnicos básicos, em uma plataforma profissional de inteligência financeira API-first.
+
+## CONTEXTO DO REPOSITÓRIO ATUAL
+O repositório `daily_stock_analysis` atualmente:
+- Usa exclusivamente yfinance para obter dados de preço e volume
+- Calcula indicadores técnicos clássicos (RSI, MACD, médias móveis, Bandas de Bollinger)
+- Opera com lista estática de tickers
+- Gera sinais de compra/venda baseados apenas em análise técnica
+- Envia alertas por e-mail via SMTP
+- É executado manualmente ou via cron job local
+- Não possui APIs, backtesting, validação histórica, nem fontes alternativas de dados
+
+## OBJETIVO DA TRANSFORMAÇÃO
+Modernizar o sistema para uma arquitetura API-first profissional, orientada a eventos, com coleta de dados multidimensionais (técnico + fundamental + sentimento + macro + opções), suporte a backtesting, descoberta dinâmica de oportunidades e execução de estratégias. A plataforma deve ser escalável, modular e integrável com dashboards e corretoras.
+
+## ARQUITETURA ALVO
+
+### 1. Estrutura de Diretórios
+```
+daily_stock_analysis/
+├── api/
+│   ├── __init__.py
+│   ├── main.py                 # FastAPI app entry point
+│   ├── dependencies.py         # Injeção de dependências
+│   ├── routers/
+│   │   ├── market.py
+│   │   ├── fundamentals.py
+│   │   ├── news.py
+│   │   ├── indicators.py
+│   │   ├── signals.py
+│   │   ├── backtesting.py
+│   │   ├── portfolio.py
+│   │   └── alerts.py
+│   ├── schemas/
+│   │   ├── market.py
+│   │   ├── fundamentals.py
+│   │   ├── news.py
+│   │   ├── signals.py
+│   │   └── comm
+<truncated 9622 bytes>
+e pode ser executado standalone
+- ADICIONAR logging em todos os módulos
+- USAR type hints em todo o código
+- RETORNAR sempre JSON com estrutura consistente: `{"success": bool, "data": ..., "error": ...}`
+- VERSIONAR a API (v1) para permitir evolução futura
+- TESTAR cada módulo individualmente antes de integrar
+
+## ENTREGA ESPERADA
+Ao final, você deve entregar:
+1. Código completo e funcional em todas as fases
+2. Arquivo `docker-compose.yml` funcional
+3. Arquivo `.env.example` com todas as variáveis necessárias
+4. Migrations de banco de dados
+5. Coleção Postman ou OpenAPI spec
+6. Testes com cobertura >80%
+7. README.md detalhado com instruções de setup e exemplos de uso
+8. Script de migração dos dados existentes (se houver)
+
+Comece analisando a codebase atual, proponha seu plano de execução detalhado e inicie pela Fase 1. Reporte progresso a cada fase concluída.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-09T12:36:53+01:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\jeron\Downloads\daily_stock_analysis\apps\dsa-web\src\pages\HomePage.tsx (LANGUAGE_TSX)
+Cursor is on line: 11
+Other open documents:
+- c:\Users\jeron\Downloads\daily_stock_analysis\apps\dsa-web\src\pages\HomePage.tsx (LANGUAGE_TSX)
+- c:\Users\jeron\Downloads\daily_stock_analysis\apps\dsa-web\src\components\report\ReportOverview.tsx (LANGUAGE_TSX)
+- c:\Users\jeron\Downloads\daily_stock_analysis\apps\dsa-web\src\components\history\HistoryListItem.tsx (LANGUAGE_TSX)
+Running terminal commands:
+- python main.py --serve (in c:\Users\jeron\Downloads\daily_stock_analysis, running for 25m32s)
+- npm run dev (in c:\Users\jeron\Downloads\daily_stock_analysis\apps\dsa-web, running for 25m25s)
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from None to Gemini 3.1 Pro (High). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>

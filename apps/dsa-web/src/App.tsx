@@ -1,29 +1,44 @@
 import type React from 'react';
 import { lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { ApiErrorAlert, Shell } from './components/common';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'sonner';
+import { Shell } from './components/common';
 import {
   PageLoadingFallback,
   RouteOutletBoundary,
   StandaloneRouteBoundary,
 } from './components/layout/RouteBoundary';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { useAuth } from './hooks';
 import { useAgentChatStore } from './stores/agentChatStore';
 import './App.css';
 
 const HomePage = lazy(() => import('./pages/HomePage'));
+const MarketPage = lazy(() => import('./pages/MarketPage'));
 const BacktestPage = lazy(() => import('./pages/BacktestPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const ChatPage = lazy(() => import('./pages/ChatPage'));
+const AlpacaPortfolioPage = lazy(() => import('./pages/AlpacaPortfolioPage'));
 const PortfolioPage = lazy(() => import('./pages/PortfolioPage'));
 const AlertsPage = lazy(() => import('./pages/AlertsPage'));
 const StockScreeningPage = lazy(() => import('./pages/StockScreeningPage'));
 
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
 const AppContent: React.FC = () => {
   const location = useLocation();
-  const { authEnabled, loggedIn, isLoading, loadError, refreshStatus } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
     useAgentChatStore.getState().setCurrentRoute(location.pathname);
@@ -33,41 +48,38 @@ const AppContent: React.FC = () => {
     return <PageLoadingFallback />;
   }
 
-  if (loadError) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-base px-4">
-        <div className="w-full max-w-lg">
-          <ApiErrorAlert error={loadError} />
-        </div>
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={() => void refreshStatus()}
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
+  // Auth guard
+  const publicRoutes = ['/login', '/register'];
+  const isPublicRoute = publicRoutes.includes(location.pathname);
 
-  if (authEnabled && !loggedIn) {
-    if (location.pathname === '/login') {
-      return (
-        <StandaloneRouteBoundary>
-          <LoginPage />
-        </StandaloneRouteBoundary>
-      );
-    }
+  if (!isAuthenticated && !isPublicRoute) {
     const redirect = encodeURIComponent(location.pathname + location.search);
     return <Navigate to={`/login?redirect=${redirect}`} replace />;
   }
 
-  if (location.pathname === '/login') {
+  if (isAuthenticated && isPublicRoute) {
     return <Navigate to="/" replace />;
   }
 
   return (
     <Routes>
+      <Route
+        path="/login"
+        element={
+          <StandaloneRouteBoundary>
+            <LoginPage />
+          </StandaloneRouteBoundary>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <StandaloneRouteBoundary>
+            <RegisterPage />
+          </StandaloneRouteBoundary>
+        }
+      />
+      
       <Route
         element={(
           <Shell>
@@ -76,8 +88,10 @@ const AppContent: React.FC = () => {
         )}
       >
         <Route path="/" element={<HomePage />} />
+        <Route path="/market" element={<MarketPage />} />
         <Route path="/chat" element={<ChatPage />} />
-        <Route path="/portfolio" element={<PortfolioPage />} />
+        <Route path="/portfolio" element={<AlpacaPortfolioPage />} />
+        <Route path="/portfolio-legacy" element={<PortfolioPage />} />
         <Route path="/screening" element={<StockScreeningPage />} />
         <Route path="/backtest" element={<BacktestPage />} />
         <Route path="/alerts" element={<AlertsPage />} />
@@ -88,13 +102,18 @@ const AppContent: React.FC = () => {
   );
 };
 
+import { AuthProvider } from './contexts/AuthContext';
+
 const App: React.FC = () => {
   return (
-    <Router>
+    <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AppContent />
+        <Router>
+          <AppContent />
+        </Router>
       </AuthProvider>
-    </Router>
+      <Toaster position="top-right" theme="system" richColors />
+    </QueryClientProvider>
   );
 };
 

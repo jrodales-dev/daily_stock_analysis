@@ -146,14 +146,11 @@ export const analysisApi = {
     status?: string;
     limit?: number;
   }): Promise<TaskListResponse> => {
-    const response = await apiClient.get<Record<string, unknown>>(
-      '/api/v1/analysis/tasks',
-      { params }
-    );
-
-    const data = toCamelCase<TaskListResponse>(response.data);
-
-    return data;
+    // Mocking response because tasks API was removed in the backend rewrite
+    return {
+      items: [],
+      total: 0
+    };
   },
 
   /**

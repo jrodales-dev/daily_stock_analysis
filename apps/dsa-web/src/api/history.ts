@@ -23,23 +23,14 @@ export const historyApi = {
    * @param params Parâmetros de filtro e paginação
    */
   getList: async (params: GetHistoryListParams = {}): Promise<HistoryListResponse> => {
-    const { stockCode, startDate, endDate, page = 1, limit = 20 } = params;
-
-    const queryParams: Record<string, string | number> = { page, limit };
-    if (stockCode) queryParams.stock_code = stockCode;
-    if (startDate) queryParams.start_date = startDate;
-    if (endDate) queryParams.end_date = endDate;
-
-    const response = await apiClient.get<Record<string, unknown>>('/api/v1/history', {
-      params: queryParams,
-    });
-
-    const data = toCamelCase<{ total: number; page: number; limit: number; items: HistoryItem[] }>(response.data);
+    const { page = 1, limit = 20 } = params;
+    
+    // Mocking response because history API was removed in the backend rewrite
     return {
-      total: data.total,
-      page: data.page,
-      limit: data.limit,
-      items: data.items.map(item => toCamelCase<HistoryItem>(item)),
+      total: 0,
+      page,
+      limit,
+      items: [],
     };
   },
 
