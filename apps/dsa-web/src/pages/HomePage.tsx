@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BarChart3, Check, SlidersHorizontal } from 'lucide-react';
+import { BarChart3, Check, SlidersHorizontal, ChevronDown, ChevronRight, ChevronLeft, History } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getParsedApiError, type ParsedApiError } from '../api/error';
 import { analysisApi } from '../api/analysis';
@@ -35,6 +35,9 @@ const HomePage: React.FC = () => {
   const [analysisSkills, setAnalysisSkills] = useState<SkillInfo[]>([]);
   const [selectedStrategyId, setSelectedStrategyId] = useState('');
   const [strategyMenuOpen, setStrategyMenuOpen] = useState(false);
+  const [rightCollapsed, setRightCollapsed] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(true);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const marketReviewPollTimer = useRef<number | null>(null);
   const dashboardScrollRef = useRef<HTMLElement | null>(null);
   const strategyMenuRef = useRef<HTMLDivElement | null>(null);
@@ -64,6 +67,7 @@ const HomePage: React.FC = () => {
   }, []);
 
   useEffect(() => stopMarketReviewPolling, [stopMarketReviewPolling]);
+
   const [setupStatus, setSetupStatus] = useState<SetupStatusResponse | null>(null);
 
   const {
@@ -100,8 +104,6 @@ const HomePage: React.FC = () => {
     toggleSelectAllVisible,
     deleteSelectedHistory,
     submitAnalysis,
-    notify,
-    setNotify,
     syncTaskCreated,
     syncTaskUpdated,
     syncTaskFailed,
@@ -116,8 +118,16 @@ const HomePage: React.FC = () => {
     selectedIds,
   } = useHomeDashboardState();
 
+  // Fechar os acordeões da barra lateral direita quando houver tarefas ativas
   useEffect(() => {
-    document.title = '每日选股分析 - DSA';
+    if (activeTasks.length > 0) {
+      setActionsOpen(false);
+      setHistoryOpen(false);
+    }
+  }, [activeTasks.length]);
+
+  useEffect(() => {
+    document.title = 'Análise Diária de Ações - DSA';
   }, []);
 
   useEffect(() => {
@@ -204,7 +214,7 @@ const HomePage: React.FC = () => {
   );
   const strategyOptions = useMemo(
     () => [
-      { id: '', name: '默认策略', description: '沿用系统默认分析框架' },
+      { id: '', name: 'Estratégia Padrão', description: 'Usa o framework de análise padrão' },
       ...analysisSkills.map((skill) => ({
         id: skill.id,
         name: skill.name,
@@ -380,8 +390,8 @@ const HomePage: React.FC = () => {
           setMarketReviewReport(null);
           setMarketReviewNotice({
             variant: 'danger',
-            title: '大盘复盘已超时',
-            message: '任务长时间未返回最终结果，请在任务列表/历史中查看。',
+            title: 'Resumo do Mercado Expirou',
+            message: 'A tarefa demorou muito. Verifique a lista de tarefas/histórico.',
           });
           scrollMarketReviewFeedbackIntoView();
           return false;
@@ -395,11 +405,11 @@ const HomePage: React.FC = () => {
             setMarketReviewReport(null);
             const progress = typeof status.progress === 'number'
               ? `${status.progress}%`
-              : '进行中';
+              : 'Em andamento';
             setMarketReviewNotice({
               variant: 'warning',
-              title: '大盘复盘进行中',
-              message: `任务状态：${status.status}（${progress}）`,
+              title: 'Resumo do Mercado em Andamento',
+              message: `Status: ${status.status} (${progress})`,
             });
             return true;
           }
@@ -412,8 +422,8 @@ const HomePage: React.FC = () => {
             setMarketReviewReport(marketReviewText ? marketReviewText.trim() : null);
             setMarketReviewNotice({
               variant: 'success',
-              title: '大盘复盘已完成',
-              message: marketReviewText ? '大盘复盘任务已完成，结果如下：' : '大盘复盘任务已完成，结果已生成并按配置推送。',
+              title: 'Resumo do Mercado Concluído',
+              message: marketReviewText ? 'Tarefa de resumo do mercado concluída. Resultados abaixo:' : 'Tarefa concluída. Resultados gerados e notificações enviadas.',
             });
             setMarketReviewError(null);
             scrollMarketReviewFeedbackIntoView();
@@ -429,7 +439,7 @@ const HomePage: React.FC = () => {
                   status: 500,
                   data: {
                     error: 'market_review_failed',
-                    message: status.error || '大盘复盘执行失败。',
+                    message: status.error || 'Falha ao executar o resumo do mercado.',
                   },
                 },
               }),
@@ -443,8 +453,8 @@ const HomePage: React.FC = () => {
           setMarketReviewReport(null);
           setMarketReviewNotice({
             variant: 'danger',
-            title: '大盘复盘状态异常',
-            message: `收到未知任务状态：${status.status}`,
+            title: 'Status Anormal do Resumo',
+            message: `Status desconhecido recebido: ${status.status}`,
           });
           scrollMarketReviewFeedbackIntoView();
           return false;
@@ -484,10 +494,10 @@ const HomePage: React.FC = () => {
     setMarketReviewReport(null);
     scrollMarketReviewFeedbackIntoView();
     try {
-      const result = await analysisApi.triggerMarketReview({ sendNotification: notify });
+      const result = await analysisApi.triggerMarketReview({ sendNotification: true });
       setMarketReviewNotice({
         variant: 'success',
-        title: '大盘复盘已提交',
+        title: 'Resumo do Mercado Enviado',
         message: result.message,
       });
       scrollMarketReviewFeedbackIntoView();
@@ -502,7 +512,7 @@ const HomePage: React.FC = () => {
     } finally {
       setIsSubmittingMarketReview(false);
     }
-  }, [notify, pollMarketReviewStatus, scrollMarketReviewFeedbackIntoView]);
+  }, [pollMarketReviewStatus, scrollMarketReviewFeedbackIntoView]);
 
   const handleCopyMarketReviewReport = useCallback(() => {
     if (!marketReviewReport) {
@@ -515,7 +525,7 @@ const HomePage: React.FC = () => {
         setTimeout(() => setMarketReviewReportCopied(false), 2000);
       },
       (err) => {
-        console.error('复制失败:', err);
+        console.error('Falha ao copiar:', err);
       },
     );
   }, [marketReviewReport]);
@@ -525,25 +535,162 @@ const HomePage: React.FC = () => {
     setShowDeleteConfirm(false);
   }, [deleteSelectedHistory]);
 
+  const handleToggleHistory = useCallback(() => {
+    setHistoryOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        setActionsOpen(false); // fechar Ações ao abrir o histórico para dar mais espaço
+      }
+      return next;
+    });
+    if (rightCollapsed) setRightCollapsed(false);
+  }, [rightCollapsed]);
+
+  const handleToggleActions = useCallback(() => {
+    setActionsOpen((prev) => !prev);
+    if (rightCollapsed) setRightCollapsed(false);
+  }, [rightCollapsed]);
+
   const sidebarContent = useMemo(
     () => (
       <div className="flex min-h-0 h-full flex-col gap-3 overflow-hidden">
-        <TaskPanel tasks={activeTasks} />
-        <HistoryList
-          items={historyItems}
-          isLoading={isLoadingHistory}
-          isLoadingMore={isLoadingMore}
-          hasMore={hasMore}
-          selectedId={selectedReport?.meta.id}
-          selectedIds={selectedIds}
-          isDeleting={isDeletingHistory}
-          onItemClick={handleHistoryItemClick}
-          onLoadMore={() => void loadMoreHistory()}
-          onToggleItemSelection={toggleHistorySelection}
-          onToggleSelectAll={toggleSelectAllVisible}
-          onDeleteSelected={() => setShowDeleteConfirm(true)}
-          className="flex-1 overflow-hidden"
-        />
+        {/* TaskPanel */}
+        {!rightCollapsed && <TaskPanel tasks={activeTasks} />}
+
+        {/* Acordeão de Ações */}
+        <div className={`flex flex-col shrink-0 overflow-hidden rounded-xl border border-subtle bg-surface/40 transition-all ${rightCollapsed ? 'border-transparent bg-transparent' : ''}`}>
+          {!rightCollapsed && (
+            <button
+              className={`flex items-center justify-between p-2.5 hover:bg-hover transition-colors w-full text-left ${actionsOpen ? 'border-b border-subtle' : ''}`}
+              onClick={handleToggleActions}
+            >
+              <div className="flex items-center gap-2">
+                <svg className="h-4 w-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span className="font-medium text-sm text-foreground">Ações do Relatório</span>
+              </div>
+              <div className="flex items-center justify-center w-5 h-5 shrink-0 text-secondary-text">
+                {actionsOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </div>
+            </button>
+          )}
+
+          <div className={`flex-col gap-2 transition-all ${rightCollapsed ? 'flex' : actionsOpen ? 'flex p-2.5 pt-0' : 'hidden'}`}>
+            <Button
+              variant="home-action-ai"
+              size="sm"
+              disabled={isAnalyzing || selectedReport?.meta.id === undefined || isMarketReviewHistoryReport}
+              onClick={handleReanalyze}
+              className={`justify-start ${rightCollapsed ? 'w-10 px-0 justify-center mx-auto' : 'w-full'}`}
+              title="Reanalisar"
+            >
+              <svg className={`h-4 w-4 shrink-0 ${rightCollapsed ? '' : 'mr-2'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              {!rightCollapsed && <span className="truncate">{reportText.reanalyze}</span>}
+            </Button>
+            <Button
+              variant="home-action-ai"
+              size="sm"
+              disabled={selectedReport?.meta.id === undefined || isMarketReviewHistoryReport}
+              onClick={handleAskFollowUp}
+              className={`justify-start ${rightCollapsed ? 'w-10 px-0 justify-center mx-auto' : 'w-full'}`}
+              title="Perguntar à IA"
+            >
+              <svg className={`h-4 w-4 shrink-0 ${rightCollapsed ? '' : 'mr-2'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              {!rightCollapsed && <span className="truncate">Perguntar à IA</span>}
+            </Button>
+            <Button
+              variant="home-action-ai"
+              size="sm"
+              disabled={selectedReport?.meta.id === undefined || isMarketReviewHistoryReport}
+              className={`justify-start ${rightCollapsed ? 'w-10 px-0 justify-center mx-auto' : 'w-full'} ${isHistoryTrendOpen ? 'border-primary/70 bg-primary/15 text-primary shadow-glow-cyan' : ''}`}
+              onClick={() => {
+                if (isHistoryTrendOpen) {
+                  closeHistoryTrend();
+                  return;
+                }
+                void openHistoryTrend();
+              }}
+              title="Tendência Histórica"
+            >
+              <BarChart3 className={`h-4 w-4 shrink-0 ${rightCollapsed ? '' : 'mr-2'}`} />
+              {!rightCollapsed && <span className="truncate">Tendência Histórica</span>}
+            </Button>
+            <Button
+              variant="home-action-ai"
+              size="sm"
+              disabled={selectedReport?.meta.id === undefined}
+              onClick={openMarkdownDrawer}
+              className={`justify-start ${rightCollapsed ? 'w-10 px-0 justify-center mx-auto' : 'w-full'}`}
+              title="Relatório Completo"
+            >
+              <svg className={`h-4 w-4 shrink-0 ${rightCollapsed ? '' : 'mr-2'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              {!rightCollapsed && <span className="truncate">{reportText.fullReport}</span>}
+            </Button>
+          </div>
+        </div>
+
+        {/* Acordeão de Histórico */}
+        <div className={`flex flex-col overflow-hidden rounded-xl border border-subtle bg-surface/40 transition-all ${rightCollapsed ? 'hidden' : historyOpen ? 'flex-1 min-h-0' : 'shrink-0'}`}>
+          <button
+            className={`flex items-center justify-between p-2.5 hover:bg-hover transition-colors w-full text-left ${historyOpen ? 'border-b border-subtle' : ''}`}
+            onClick={handleToggleHistory}
+          >
+            <div className="flex items-center gap-2">
+              <svg className="h-4 w-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="font-medium text-sm text-foreground">Histórico de Análises</span>
+            </div>
+            <div className="flex items-center justify-center w-5 h-5 shrink-0 text-secondary-text">
+              {historyOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            </div>
+          </button>
+
+          <div className={`flex-1 min-h-0 overflow-hidden ${historyOpen ? 'flex flex-col' : 'hidden'}`}>
+            <HistoryList
+              items={historyItems}
+              isLoading={isLoadingHistory}
+              isLoadingMore={isLoadingMore}
+              hasMore={hasMore}
+              selectedId={selectedReport?.meta.id}
+              selectedIds={selectedIds}
+              isDeleting={isDeletingHistory}
+              onItemClick={handleHistoryItemClick}
+              onLoadMore={() => void loadMoreHistory()}
+              onToggleItemSelection={toggleHistorySelection}
+              onToggleSelectAll={toggleSelectAllVisible}
+              onDeleteSelected={() => setShowDeleteConfirm(true)}
+              className="flex-1 overflow-hidden"
+            />
+          </div>
+        </div>
+
+        {rightCollapsed && (
+          <button
+            onClick={handleToggleHistory}
+            className="w-10 h-10 mx-auto rounded-lg flex items-center justify-center text-secondary-text hover:bg-hover transition-colors mt-auto mb-2"
+            title="Abrir Histórico"
+          >
+            <History className="w-5 h-5" />
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setRightCollapsed(!rightCollapsed)}
+          className={`flex h-11 w-full cursor-pointer select-none items-center justify-center rounded-2xl border border-transparent px-2 text-sm text-secondary-text transition-all hover:border-border/70 hover:bg-hover hover:text-foreground ${rightCollapsed ? 'mt-2' : 'mt-auto'}`}
+          title={rightCollapsed ? 'Expandir Painel' : 'Minimizar Painel'}
+          aria-label={rightCollapsed ? 'Expandir Painel' : 'Minimizar Painel'}
+        >
+          {rightCollapsed ? <ChevronLeft className="h-5 w-5 shrink-0" /> : <ChevronRight className="h-5 w-5 shrink-0" />}
+        </button>
       </div>
     ),
     [
@@ -556,9 +703,24 @@ const HomePage: React.FC = () => {
       handleHistoryItemClick,
       loadMoreHistory,
       selectedIds,
-      selectedReport?.meta.id,
       toggleHistorySelection,
       toggleSelectAllVisible,
+      isAnalyzing,
+      selectedReport?.meta.id,
+      isMarketReviewHistoryReport,
+      handleReanalyze,
+      reportText.reanalyze,
+      handleAskFollowUp,
+      isHistoryTrendOpen,
+      closeHistoryTrend,
+      openHistoryTrend,
+      openMarkdownDrawer,
+      reportText.fullReport,
+      rightCollapsed,
+      actionsOpen,
+      historyOpen,
+      handleToggleActions,
+      handleToggleHistory,
     ],
   );
 
@@ -568,122 +730,106 @@ const HomePage: React.FC = () => {
       className="flex h-[calc(100vh-5rem)] w-full flex-col overflow-hidden md:flex-row sm:h-[calc(100vh-5.5rem)] lg:h-[calc(100vh-2rem)]"
     >
       <div className="flex-1 flex flex-col min-h-0 min-w-0 max-w-full lg:max-w-6xl mx-auto w-full">
-        <header className="relative z-30 flex min-w-0 flex-shrink-0 items-center overflow-visible px-3 py-3 md:px-4 md:py-4">
-          <div className="flex min-w-0 flex-1 flex-col gap-2.5 md:flex-row md:items-center">
-            <div className="flex min-w-0 flex-1 items-center gap-2.5">
+        <header className="relative z-30 flex min-w-0 flex-shrink-0 items-center overflow-visible px-3 py-3 md:px-4 md:py-4 mt-2">
+          <div className="flex min-w-0 flex-1 flex-col gap-3 md:flex-row md:items-center">
+
+            <div className="flex min-w-0 flex-1 items-center">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="md:hidden -ml-1 flex-shrink-0 rounded-lg p-1.5 text-secondary-text transition-colors hover:bg-hover hover:text-foreground"
-                aria-label="历史记录"
+                className="md:hidden mr-2 flex-shrink-0 rounded-lg p-1.5 text-secondary-text transition-colors hover:bg-hover hover:text-foreground"
+                aria-label="Menu"
               >
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
-              <div className="relative min-w-0 flex-1">
-                <StockAutocomplete
-                  value={query}
-                  onChange={setQuery}
-                  onSubmit={(stockCode, stockName, selectionSource) => {
-                    handleSubmitAnalysis(stockCode, stockName, selectionSource);
-                  }}
-                  placeholder="输入股票代码或名称，如 600519、贵州茅台、AAPL"
-                  disabled={isAnalyzing}
-                  className={inputError ? 'border-danger/50' : undefined}
-                />
-              </div>
-              {analysisSkills.length > 0 ? (
-                <div ref={strategyMenuRef} className="relative flex-shrink-0">
-                  <button
-                    ref={strategyButtonRef}
-                    id="strategy-menu-button"
-                    type="button"
-                    aria-haspopup="menu"
-                    aria-expanded={strategyMenuOpen}
-                    aria-controls={strategyMenuOpen ? 'strategy-menu' : undefined}
-                    onClick={() => setStrategyMenuOpen((open) => !open)}
-                    onKeyDown={handleStrategyButtonKeyDown}
+
+              <div className="relative min-w-0 flex-1 flex items-center bg-surface/30 backdrop-blur-md border border-subtle/60 rounded-2xl p-1 shadow-sm transition-all focus-within:bg-surface/50 focus-within:border-primary/30 focus-within:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] hover:border-border">
+                <div className="flex-1 min-w-0 relative group">
+                  <StockAutocomplete
+                    value={query}
+                    onChange={setQuery}
+                    onSubmit={(stockCode, stockName, selectionSource) => {
+                      handleSubmitAnalysis(stockCode, stockName, selectionSource);
+                    }}
+                    placeholder="Insira o código ou nome da ação..."
                     disabled={isAnalyzing}
-                    className="home-surface-button flex h-10 max-w-[8.5rem] items-center gap-1.5 rounded-xl px-3 text-xs text-foreground disabled:cursor-not-allowed disabled:opacity-60 sm:max-w-[11rem]"
-                  >
-                    <SlidersHorizontal className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
-                    <span className="truncate">{selectedStrategy?.name || '策略'}</span>
-                  </button>
-                  {strategyMenuOpen ? (
-                    <div
-                      id="strategy-menu"
-                      role="menu"
-                      aria-labelledby="strategy-menu-button"
-                      onKeyDown={handleStrategyMenuKeyDown}
-                      className="absolute right-0 top-11 z-[120] max-h-80 w-[min(18rem,calc(100vw-1.5rem))] overflow-y-auto rounded-xl border border-subtle bg-elevated p-1.5 text-sm text-foreground shadow-2xl"
-                    >
-                      {strategyOptions.map((option, index) => {
-                        const selected = selectedStrategyId === option.id;
-                        return (
-                          <button
-                            key={option.id || 'default'}
-                            ref={(node) => {
-                              strategyItemRefs.current[index] = node;
-                            }}
-                            type="button"
-                            role="menuitemradio"
-                            aria-checked={selected}
-                            tabIndex={-1}
-                            onClick={() => selectStrategy(option.id)}
-                            className="flex w-full items-start gap-2 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-hover"
-                          >
-                            <Check className={`mt-0.5 h-4 w-4 flex-shrink-0 ${selected ? 'opacity-100' : 'opacity-0'}`} aria-hidden="true" />
-                            <span className="min-w-0">
-                              <span className="block font-medium">{option.name}</span>
-                              <span className="mt-0.5 line-clamp-2 block text-xs leading-5 text-muted-text">{option.description}</span>
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : null}
+                    className={`border-none bg-transparent h-11 shadow-none focus:ring-0 w-full ${inputError ? 'text-danger' : ''}`}
+                  />
                 </div>
-              ) : null}
+
+                {analysisSkills.length > 0 && (
+                  <>
+                    <div className="w-px h-6 bg-subtle/80 mx-1 shrink-0" />
+                    <div ref={strategyMenuRef} className="relative flex-shrink-0">
+                      <button
+                        ref={strategyButtonRef}
+                        id="strategy-menu-button"
+                        type="button"
+                        aria-haspopup="menu"
+                        aria-expanded={strategyMenuOpen}
+                        aria-controls={strategyMenuOpen ? 'strategy-menu' : undefined}
+                        onClick={() => setStrategyMenuOpen((open) => !open)}
+                        onKeyDown={handleStrategyButtonKeyDown}
+                        disabled={isAnalyzing}
+                        title={selectedStrategy?.name || 'Estratégia de Análise'}
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-secondary-text transition-colors hover:text-foreground hover:bg-surface/60 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <SlidersHorizontal className="h-5 w-5" aria-hidden="true" />
+                      </button>
+                      {strategyMenuOpen ? (
+                        <div
+                          id="strategy-menu"
+                          role="menu"
+                          aria-labelledby="strategy-menu-button"
+                          onKeyDown={handleStrategyMenuKeyDown}
+                          className="absolute right-0 top-[3.25rem] z-[120] max-h-80 w-[min(18rem,calc(100vw-1.5rem))] overflow-y-auto rounded-xl border border-subtle bg-elevated/95 backdrop-blur-xl p-1.5 text-sm text-foreground shadow-2xl"
+                        >
+                          <div className="px-2.5 py-2 mb-1 border-b border-subtle/40 flex items-center gap-2">
+                            <SlidersHorizontal className="h-4 w-4 text-primary" />
+                            <span className="text-[11px] font-bold text-secondary-text uppercase tracking-widest">Estratégias de Análise</span>
+                          </div>
+                          {strategyOptions.map((option, index) => {
+                            const selected = selectedStrategyId === option.id;
+                            return (
+                              <button
+                                key={option.id || 'default'}
+                                ref={(node) => {
+                                  strategyItemRefs.current[index] = node;
+                                }}
+                                type="button"
+                                role="menuitemradio"
+                                aria-checked={selected}
+                                tabIndex={-1}
+                                onClick={() => selectStrategy(option.id)}
+                                className={`flex w-full items-start gap-2 rounded-lg px-2.5 py-2 text-left transition-colors ${selected ? 'bg-primary/10 text-primary' : 'hover:bg-hover'}`}
+                              >
+                                <Check className={`mt-0.5 h-4 w-4 flex-shrink-0 ${selected ? 'opacity-100' : 'opacity-0'}`} aria-hidden="true" />
+                                <span className="min-w-0">
+                                  <span className="block font-semibold">{option.name}</span>
+                                  <span className="mt-0.5 line-clamp-2 block text-[11px] leading-4 opacity-70">{option.description}</span>
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : null}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
-            <div className="flex min-w-0 flex-shrink-0 items-center gap-2.5">
-              <label className="flex h-10 flex-shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-subtle bg-surface/60 px-3 text-xs text-secondary-text select-none transition-colors hover:border-subtle-hover hover:text-foreground">
-                <input
-                  type="checkbox"
-                  checked={notify}
-                  onChange={(e) => setNotify(e.target.checked)}
-                  className="h-3.5 w-3.5 rounded border-border accent-primary"
-                />
-                推送通知
-              </label>
-              <Button
-                type="button"
-                variant="secondary"
-                size="md"
-                isLoading={isSubmittingMarketReview}
-                loadingText="提交中"
-                onClick={() => void handleTriggerMarketReview()}
-                className="h-10 flex-1 whitespace-nowrap md:flex-none"
-              >
-                <BarChart3 className="h-4 w-4" aria-hidden="true" />
-                大盘复盘
-              </Button>
+
+            <div className="flex min-w-0 flex-shrink-0 items-center">
               <button
                 type="button"
-                onClick={() => handleSubmitAnalysis()}
-                disabled={!query || isAnalyzing}
-                className="btn-primary flex h-10 flex-1 items-center justify-center gap-1.5 whitespace-nowrap md:flex-none"
+                disabled={isSubmittingMarketReview}
+                onClick={() => void handleTriggerMarketReview()}
+                className="group relative flex h-[52px] items-center justify-center gap-2 overflow-hidden rounded-2xl border border-primary/20 bg-primary/5 px-5 font-semibold text-primary transition-all duration-300 hover:bg-primary/10 hover:shadow-[0_0_20px_-5px_rgba(0,0,0,0.15)] disabled:opacity-60 md:flex-none w-full md:w-auto"
               >
-                {isAnalyzing ? (
-                  <>
-                    <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    分析中
-                  </>
-                ) : (
-                  '分析'
-                )}
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <BarChart3 className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>Resumo do Mercado</span>
               </button>
             </div>
           </div>
@@ -694,7 +840,7 @@ const HomePage: React.FC = () => {
             {inputError ? (
               <InlineAlert
                 variant="danger"
-                title="输入有误"
+                title="Entrada Inválida"
                 message={inputError}
                 className="rounded-xl px-3 py-2 text-xs shadow-none"
               />
@@ -702,7 +848,7 @@ const HomePage: React.FC = () => {
             {!inputError && duplicateError ? (
               <InlineAlert
                 variant="warning"
-                title="任务已存在"
+                title="Tarefa já existe"
                 message={duplicateError}
                 className="rounded-xl px-3 py-2 text-xs shadow-none"
               />
@@ -714,11 +860,11 @@ const HomePage: React.FC = () => {
           <div className="px-3 pb-2 md:px-4">
             <InlineAlert
               variant="warning"
-              title="基础配置未完成"
+              title="Configuração Básica Incompleta"
               message={
                 setupMissingLabels
-                  ? `还缺少 ${setupMissingLabels}，完成后即可开始最小可用分析。`
-                  : '还缺少基础配置，完成后即可开始最小可用分析。'
+                  ? `Faltando ${setupMissingLabels}, conclua para iniciar a análise mínima.`
+                  : 'Falta a configuração básica. Conclua para iniciar a análise mínima.'
               }
               action={(
                 <Button
@@ -727,7 +873,7 @@ const HomePage: React.FC = () => {
                   size="sm"
                   onClick={() => navigate('/settings')}
                 >
-                  去配置
+                  Ir para Configurações
                 </Button>
               )}
               className="rounded-xl px-3 py-2 text-xs shadow-none"
@@ -736,10 +882,6 @@ const HomePage: React.FC = () => {
         ) : null}
 
         <div className="flex-1 flex min-h-0 overflow-hidden">
-          <div className="hidden min-h-0 w-64 shrink-0 flex-col overflow-hidden pl-4 pb-4 md:flex lg:w-72">
-            {sidebarContent}
-          </div>
-
           {sidebarOpen ? (
             <div className="fixed inset-0 z-40 md:hidden" onClick={() => setSidebarOpen(false)}>
               <div className="page-drawer-overlay absolute inset-0" />
@@ -755,7 +897,7 @@ const HomePage: React.FC = () => {
           <section
             ref={dashboardScrollRef}
             data-testid="home-dashboard-scroll"
-            className="flex-1 min-w-0 min-h-0 overflow-x-auto overflow-y-auto px-3 pb-4 md:px-6 touch-pan-y"
+            className="flex-1 min-w-0 min-h-0 overflow-x-auto overflow-y-auto px-3 pb-2 md:pl-6 md:pr-2 touch-pan-y"
           >
             {marketReviewNotice ? (
               <div className="mb-3">
@@ -781,14 +923,14 @@ const HomePage: React.FC = () => {
             {marketReviewReport ? (
               <div className="mb-3 rounded-xl border border-subtle bg-surface/70 px-3 py-3 text-xs text-secondary-text shadow-sm">
                 <div className="mb-2 flex items-center justify-between gap-2">
-                  <p className="font-semibold text-foreground">大盘复盘报告</p>
+                  <p className="font-semibold text-foreground">Relatório de Resumo do Mercado</p>
                   <button
                     type="button"
                     className="home-surface-button h-7 rounded-md px-3 py-1 text-xs text-foreground"
                     disabled={marketReviewReportCopied}
                     onClick={() => void handleCopyMarketReviewReport()}
                   >
-                    {marketReviewReportCopied ? '已复制' : '复制'}
+                    {marketReviewReportCopied ? 'Copiado' : 'Copiar'}
                   </button>
                 </div>
                 <pre
@@ -809,61 +951,10 @@ const HomePage: React.FC = () => {
             ) : null}
             {isLoadingReport ? (
               <div className="flex h-full flex-col items-center justify-center">
-                <DashboardStateBlock title="加载报告中..." loading />
+                <DashboardStateBlock title="Carregando relatório..." loading />
               </div>
             ) : selectedReport ? (
-              <div className={isHistoryTrendOpen ? 'max-w-6xl space-y-4 pb-8' : 'max-w-4xl space-y-4 pb-8'}>
-                <div className="flex flex-wrap items-center justify-end gap-2">
-                  <Button
-                    variant="home-action-ai"
-                    size="sm"
-                    disabled={isAnalyzing || selectedReport.meta.id === undefined || isMarketReviewHistoryReport}
-                    onClick={handleReanalyze}
-                  >
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    {reportText.reanalyze}
-                  </Button>
-                  <Button
-                    variant="home-action-ai"
-                    size="sm"
-                    disabled={selectedReport.meta.id === undefined || isMarketReviewHistoryReport}
-                    onClick={handleAskFollowUp}
-                  >
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                    追问 AI
-                  </Button>
-                  <Button
-                    variant="home-action-ai"
-                    size="sm"
-                    disabled={selectedReport.meta.id === undefined || isMarketReviewHistoryReport}
-                    className={isHistoryTrendOpen ? 'border-primary/70 bg-primary/15 text-primary shadow-glow-cyan' : undefined}
-                    onClick={() => {
-                      if (isHistoryTrendOpen) {
-                        closeHistoryTrend();
-                        return;
-                      }
-                      void openHistoryTrend();
-                    }}
-                  >
-                    <BarChart3 className="h-4 w-4" />
-                    历史趋势
-                  </Button>
-                  <Button
-                    variant="home-action-ai"
-                    size="sm"
-                    disabled={selectedReport.meta.id === undefined}
-                    onClick={openMarkdownDrawer}
-                  >
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    {reportText.fullReport}
-                  </Button>
-                </div>
+              <div className="w-full space-y-4 pb-2">
                 {isHistoryTrendOpen ? (
                   <StockHistoryTrendDrawer
                     key={`stock-history-${selectedReport.meta.id}`}
@@ -888,8 +979,8 @@ const HomePage: React.FC = () => {
             ) : (
               <div className="flex h-full items-center justify-center">
                 <EmptyState
-                  title="开始分析"
-                  description="输入股票代码进行分析，或从左侧选择历史报告查看。"
+                  title="Iniciar Análise"
+                  description="Insira o código da ação para análise ou selecione um relatório histórico à esquerda."
                   className="max-w-xl border-dashed"
                   icon={(
                     <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -900,8 +991,19 @@ const HomePage: React.FC = () => {
               </div>
             )}
           </section>
+
+          <aside
+            className={`hidden min-h-0 shrink-0 flex-col overflow-hidden rounded-[1.5rem] border border-[var(--shell-sidebar-border)] bg-card/72 shadow-soft-card backdrop-blur-sm transition-[width] duration-200 lg:flex ml-4 mb-4 mt-2 p-2 ${rightCollapsed ? 'w-[72px]' : 'w-[280px]'}`}
+            aria-label="Ações e Histórico"
+          >
+
+
+            {sidebarContent}
+          </aside>
         </div>
       </div>
+
+
 
       {markdownDrawerOpen && selectedReport?.meta.id ? (
         <ReportMarkdownDrawer
@@ -916,14 +1018,14 @@ const HomePage: React.FC = () => {
 
       <ConfirmDialog
         isOpen={showDeleteConfirm}
-        title="删除历史记录"
+        title="Excluir Histórico"
         message={
           selectedHistoryIds.length === 1
-            ? '确认删除这条历史记录吗？删除后将不可恢复。'
-            : `确认删除选中的 ${selectedHistoryIds.length} 条历史记录吗？删除后将不可恢复。`
+            ? 'Tem certeza de que deseja excluir este histórico? Esta ação é irreversível.'
+            : `Deseja excluir ${selectedHistoryIds.length} itens selecionados? Esta ação é irreversível.`
         }
-        confirmText={isDeletingHistory ? '删除中...' : '确认删除'}
-        cancelText="取消"
+        confirmText={isDeletingHistory ? 'Excluindo...' : 'Confirmar Exclusão'}
+        cancelText="Cancelar"
         isDanger={true}
         onConfirm={handleDeleteSelectedHistory}
         onCancel={() => setShowDeleteConfirm(false)}

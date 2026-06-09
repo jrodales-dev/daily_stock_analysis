@@ -2,7 +2,7 @@ import type React from 'react';
 import { useRef, useCallback, useEffect, useId, useState } from 'react';
 import type { HistoryItem } from '../../types/analysis';
 import { Badge, Button, ScrollArea } from '../common';
-import { DashboardPanelHeader, DashboardStateBlock } from '../dashboard';
+import {  DashboardStateBlock } from '../dashboard';
 import { HistoryListItem } from './HistoryListItem';
 
 interface HistoryListProps {
@@ -85,22 +85,20 @@ export const HistoryList: React.FC<HistoryListProps> = ({
     }
   }, [someVisibleSelected]);
 
-  useEffect(() => {
-    if (items.length === 0) {
-      setIsEditing(false);
-    }
-  }, [items.length]);
+
 
   const toggleEditMode = () => {
-    if (isEditing && selectedCount > 0) {
+    if ((isEditing || selectedCount > 0)) {
       // Clear selections when exiting edit mode
       items.forEach(item => {
         if (selectedIds.has(item.id)) {
           onToggleItemSelection(item.id);
         }
       });
+      setIsEditing(false);
+    } else {
+      setIsEditing(true);
     }
-    setIsEditing(!isEditing);
   };
 
   const groupedItems = items.reduce((acc, item) => {
@@ -122,37 +120,26 @@ export const HistoryList: React.FC<HistoryListProps> = ({
   };
 
   return (
-    <aside className={`glass-card overflow-hidden flex flex-col ${className}`}>
+    <aside className={`flex flex-col h-full w-full ${className}`}>
       <ScrollArea
         viewportRef={scrollContainerRef}
-        viewportClassName="p-4"
+        viewportClassName="p-3 pt-2"
         testId="home-history-list-scroll"
       >
         <div className="mb-4 space-y-3">
-          {!isEditing ? (
-            <DashboardPanelHeader
-              className="mb-1"
-              title="Histórico de Análises"
-              titleClassName="text-sm font-medium"
-              leading={(
-                <svg className="h-4 w-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+          {!(isEditing || selectedCount > 0) ? (
+            <div className="flex justify-end items-center px-1 mb-1">
+              {items.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="xsm"
+                  onClick={toggleEditMode}
+                  className="text-muted-text hover:text-foreground text-xs h-7 px-3"
+                >
+                  Editar
+                </Button>
               )}
-              headingClassName="items-center"
-              actions={
-                items.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="xsm"
-                    onClick={toggleEditMode}
-                    className="text-muted-text hover:text-foreground text-xs"
-                  >
-                    Editar
-                  </Button>
-                )
-              }
-            />
+            </div>
           ) : (
             <div className="flex items-center justify-between gap-2 p-2 bg-surface rounded-xl border border-border shadow-sm animate-in fade-in slide-in-from-top-2">
               <label
@@ -224,8 +211,8 @@ export const HistoryList: React.FC<HistoryListProps> = ({
           <div className="space-y-4">
             {Object.entries(groupedItems).map(([dateStr, groupItems]) => (
               <div key={dateStr} className="space-y-2">
-                <div className="sticky top-0 z-20 bg-background/95 backdrop-blur py-1.5 px-2">
-                  <span className="text-xs font-semibold text-secondary-text uppercase tracking-widest">{getDateGroupLabel(dateStr)}</span>
+                <div className="sticky top-0 z-20 backdrop-blur-md bg-surface/70 py-1.5 px-3 rounded-xl border border-subtle/50 mx-1 shadow-sm mb-2 mt-1 flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-foreground opacity-70 uppercase tracking-[0.2em]">{getDateGroupLabel(dateStr)}</span>
                 </div>
                 <div className="space-y-1.5">
                   {groupItems.map((item) => (
@@ -252,12 +239,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
               </div>
             )}
 
-            {!hasMore && items.length > 0 && (
-              <div className="text-center py-5">
-                <div className="h-px bg-subtle w-full mb-3" />
-                <span className="text-[10px] text-secondary-text uppercase tracking-[0.2em]">FIM DA LISTA</span>
-              </div>
-            )}
+
           </div>
         )}
       </ScrollArea>

@@ -228,24 +228,26 @@ export const ReportOverview: React.FC<ReportOverviewProps> = ({
             </div>
           </Card>
 
-          <div className="flex flex-col gap-4 justify-center">
+          <div className="flex flex-col gap-4 justify-center h-full">
             {/* Recomendação */}
             <Card
               variant="bordered"
               padding="sm"
               hoverable
-              className="home-panel-card home-insight-card flex-1"
+              className="home-panel-card home-insight-card flex-1 flex flex-col"
               style={{ ['--home-insight-tone' as string]: 'var(--home-strategy-buy)' }}
             >
-              <div className="flex items-start gap-3">
-                <div className="home-insight-icon w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                  </svg>
-                </div>
-                <div className="space-y-1.5">
+              <div className="flex flex-col h-full flex-1">
+                <div className="flex items-center gap-2">
+                  <div className="home-insight-icon w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                  </div>
                   <h4 className="home-insight-title text-[11px] font-medium uppercase tracking-[0.16em]">{text.actionAdvice}</h4>
-                  <p className="home-insight-body text-sm leading-6">
+                </div>
+                <div className="flex-1 flex items-center">
+                  <p className="home-insight-body text-2xl font-bold leading-tight text-foreground pl-10">
                     {localizeOperationAdvice(summary.operationAdvice) || text.noAdvice}
                   </p>
                 </div>
@@ -257,18 +259,20 @@ export const ReportOverview: React.FC<ReportOverviewProps> = ({
               variant="bordered"
               padding="sm"
               hoverable
-              className="home-panel-card home-insight-card flex-1"
+              className="home-panel-card home-insight-card flex-1 flex flex-col"
               style={{ ['--home-insight-tone' as string]: 'var(--home-strategy-take)' }}
             >
-              <div className="flex items-start gap-3">
-                <div className="home-insight-icon w-8 h-8 rounded-lg bg-warning/10 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-4 h-4 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                  </svg>
-                </div>
-                <div className="space-y-1.5">
+              <div className="flex flex-col h-full flex-1">
+                <div className="flex items-center gap-2">
+                  <div className="home-insight-icon w-8 h-8 rounded-lg bg-warning/10 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                  </div>
                   <h4 className="home-insight-title text-[11px] font-medium uppercase tracking-[0.16em]">{text.trendPrediction}</h4>
-                  <p className="home-insight-body text-sm leading-6">
+                </div>
+                <div className="flex-1 flex items-center">
+                  <p className="home-insight-body text-2xl font-bold leading-tight text-foreground pl-10">
                     {localizeTrendPrediction(summary.trendPrediction) || text.noPrediction}
                   </p>
                 </div>
@@ -276,64 +280,102 @@ export const ReportOverview: React.FC<ReportOverviewProps> = ({
             </Card>
           </div>
 
-          {/* Setores Relacionados */}
-          {relatedBoards.length > 0 && (
+          <div className="flex flex-col gap-4 justify-center h-full">
+            {/* Setores Relacionados */}
+            {relatedBoards.length > 0 && (
+              <Card
+                variant="bordered"
+                padding="sm"
+                hoverable
+                className="home-panel-card home-insight-card text-left flex-1 flex flex-col justify-center"
+                style={{ ['--home-insight-tone' as string]: 'hsl(var(--primary))' }}
+              >
+                <section aria-label={text.relatedBoards} className="flex items-start gap-3">
+                  <div className="home-insight-icon w-8 h-8 rounded-lg bg-cyan/10 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                  </div>
+                  <div className="space-y-1.5 min-w-0 w-full">
+                    <h4 className="home-insight-title text-[11px] font-medium uppercase tracking-[0.16em] text-cyan">{text.relatedBoards}</h4>
+                    <div className="home-related-board-list flex flex-col gap-2.5 pt-1 pb-1 max-h-[140px] overflow-y-auto pr-2 custom-scrollbar">
+                    {relatedBoards.map((board, index) => {
+                      const boardName = normalizeBoardName(board.name);
+                      const signal = boardSignals.get(boardName);
+                      return (
+                        <div
+                          key={`${boardName}-${board.code || index}`}
+                          className="flex flex-wrap items-center gap-1.5 text-sm"
+                        >
+                          <span className="home-accent-chip px-2 py-0.5 text-xs font-medium">
+                            {boardName}
+                          </span>
+
+                          {signal && (
+                            <Badge
+                              variant={getBoardStatusVariant(signal.status)}
+                              className="home-board-status-badge shadow-none"
+                            >
+                              {getBoardStatusLabel(signal.status)}
+                            </Badge>
+                          )}
+                          {signal && signal.changePct !== undefined && signal.changePct !== null && (
+                            <span
+                              className="text-xs font-mono"
+                              style={getPriceChangeStyle(signal.changePct)}
+                            >
+                              {formatChangePct(signal.changePct)}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                    </div>
+                  </div>
+                </section>
+              </Card>
+            )}
+
+            {/* Indicadores Chave */}
             <Card
               variant="bordered"
               padding="sm"
               hoverable
-              className="home-panel-card home-insight-card text-left"
-              style={{ ['--home-insight-tone' as string]: 'var(--home-strategy-hold)' }}
+              className="home-panel-card home-insight-card text-left flex-1 flex flex-col justify-center"
+              style={{ ['--home-insight-tone' as string]: '#a855f7' }}
             >
-              <section aria-label={text.relatedBoards} className="flex items-start gap-3">
-                <div className="home-insight-icon w-8 h-8 rounded-lg bg-cyan/10 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-4 h-4 text-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+              <section aria-label="Indicadores Chave" className="flex items-start gap-3">
+                <div className="home-insight-icon w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(168, 85, 247, 0.1)' }}>
+                  <svg className="w-4 h-4" style={{ color: '#a855f7' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
                 </div>
                 <div className="space-y-1.5 min-w-0 w-full">
-                  <h4 className="home-insight-title text-[11px] font-medium uppercase tracking-[0.16em]">{text.relatedBoards}</h4>
-                  <div className="home-related-board-list flex flex-col gap-2.5 pt-1 pb-1 max-h-[140px] overflow-y-auto pr-2 custom-scrollbar">
-                  {relatedBoards.map((board, index) => {
-                    const boardName = normalizeBoardName(board.name);
-                    const signal = boardSignals.get(boardName);
-                    return (
-                      <div
-                        key={`${boardName}-${board.code || index}`}
-                        className="flex flex-wrap items-center gap-1.5 text-sm"
-                      >
-                        <span className="home-accent-chip px-2 py-0.5 text-xs font-medium">
-                          {boardName}
-                        </span>
-                        {board.type && (
-                          <span className="home-board-pill rounded-full px-2 py-0.5 text-xs">
-                            {board.type === '行业' ? 'Setor' : board.type === '概念' ? 'Conceito' : board.type}
-                          </span>
-                        )}
-                        {signal && (
-                          <Badge
-                            variant={getBoardStatusVariant(signal.status)}
-                            className="home-board-status-badge shadow-none"
-                          >
-                            {getBoardStatusLabel(signal.status)}
-                          </Badge>
-                        )}
-                        {signal && signal.changePct !== undefined && signal.changePct !== null && (
-                          <span
-                            className="text-xs font-mono"
-                            style={getPriceChangeStyle(signal.changePct)}
-                          >
-                            {formatChangePct(signal.changePct)}
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
+                  <h4 className="home-insight-title text-[11px] font-medium uppercase tracking-[0.16em] text-purple">Indicadores Chave</h4>
+                  <div className="grid grid-cols-2 gap-2 pt-1 pb-1">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-muted-text uppercase">Abertura</span>
+                      <span className="text-xs font-mono">{realtimeQuote?.open?.toFixed(2) ?? '--'}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-muted-text uppercase">Alta</span>
+                      <span className="text-xs font-mono">{realtimeQuote?.high?.toFixed(2) ?? '--'}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-muted-text uppercase">Baixa</span>
+                      <span className="text-xs font-mono">{realtimeQuote?.low?.toFixed(2) ?? '--'}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-muted-text uppercase">Volume</span>
+                      <span className="text-xs font-mono">
+                        {realtimeQuote?.volume ? (realtimeQuote.volume / 1000000).toFixed(2) + 'M' : '--'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </section>
             </Card>
-          )}
+          </div>
       </div>
     </div>
   );

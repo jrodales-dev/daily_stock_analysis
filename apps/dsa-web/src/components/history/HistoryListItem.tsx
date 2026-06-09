@@ -1,5 +1,4 @@
 import type React from 'react';
-import { Badge } from '../common';
 import type { HistoryItem } from '../../types/analysis';
 import { getSentimentColor } from '../../types/analysis';
 import { formatDateTime } from '../../utils/format';
@@ -45,14 +44,14 @@ export const HistoryListItem: React.FC<HistoryListItemProps> = ({
   const isTruncated = isStockNameTruncated(stockName);
 
   return (
-    <div className={`flex items-stretch gap-2 group/wrapper relative transition-all duration-200 ${isEditing ? 'pl-1' : ''}`}>
-      <div className={`pt-3 transition-all duration-200 overflow-hidden flex items-center ${isEditing || isChecked ? 'w-6 opacity-100' : 'w-0 opacity-0 group-hover/wrapper:w-6 group-hover/wrapper:opacity-100'}`}>
+    <div className={`flex items-center gap-2 group/wrapper relative transition-all duration-300 ${isEditing ? 'pl-1' : ''}`}>
+      <div className={`transition-all duration-300 overflow-hidden flex items-center ${isEditing || isChecked ? 'w-6 opacity-100' : 'w-0 opacity-0 group-hover/wrapper:w-6 group-hover/wrapper:opacity-100'}`}>
         <input
           type="checkbox"
           checked={isChecked}
           onChange={() => onToggleChecked(item.id)}
           disabled={isDeleting}
-          className="h-4 w-4 cursor-pointer rounded border-subtle bg-transparent accent-primary focus:ring-primary/30 disabled:opacity-50 transition-colors"
+          className="h-4 w-4 cursor-pointer rounded border-subtle bg-transparent accent-primary focus:ring-primary/40 disabled:opacity-50 transition-colors"
         />
       </div>
       <button
@@ -65,57 +64,61 @@ export const HistoryListItem: React.FC<HistoryListItemProps> = ({
             onClick(item.id);
           }
         }}
-        className={`home-history-item flex-1 text-left p-3 rounded-xl border border-transparent transition-all duration-200 group/item ${
-          isViewing ? 'home-history-item-selected bg-surface/80 border-border/50 shadow-sm' : 'hover:bg-surface/50 hover:border-border/30'
+        className={`flex-1 text-left p-3 rounded-2xl border transition-all duration-300 group/item relative overflow-hidden ${
+          isViewing 
+            ? 'bg-primary/10 border-primary/40 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.1)]' 
+            : 'bg-surface/30 border-subtle hover:bg-surface/60 hover:border-primary/20 hover:shadow-lg hover:-translate-y-0.5'
         }`}
       >
+        {isViewing && (
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
+        )}
         <div className={`flex items-center gap-3 relative z-10${isTruncated ? ' group-hover/item:z-20' : ''}`}>
-          {sentimentColor && (
-            <div
-              className="w-1 h-10 rounded-full flex-shrink-0 transition-all duration-300 group-hover/item:h-12"
-              style={{
-                backgroundColor: sentimentColor,
-                boxShadow: `0 0 12px ${sentimentColor}50`,
-              }}
-            />
-          )}
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2 mb-1">
-              <div className="min-w-0 flex-1">
-                <span className="truncate text-sm font-semibold text-foreground tracking-tight">
-                  <span className="group-hover/item:hidden">
-                    {truncateStockName(stockName)}
-                  </span>
-                  <span className="hidden group-hover/item:inline">
-                    {stockName}
-                  </span>
+            <div className="flex items-center gap-2 mb-1.5">
+              {sentimentColor && (
+                <div
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{
+                    backgroundColor: sentimentColor,
+                    boxShadow: `0 0 8px ${sentimentColor}80`,
+                  }}
+                />
+              )}
+              <span className="truncate text-[13px] font-semibold text-foreground tracking-tight">
+                <span className="group-hover/item:hidden">
+                  {truncateStockName(stockName)}
+                </span>
+                <span className="hidden group-hover/item:inline">
+                  {stockName}
+                </span>
+              </span>
+            </div>
+            
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-muted-text">
+                <span className="px-1.5 py-0.5 rounded-md bg-background/50 border border-subtle text-[10px] font-mono tracking-wider shadow-sm">
+                  {item.stockCode}
+                </span>
+                <span className="text-[10px] font-medium flex items-center gap-1 opacity-80">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {formatDateTime(item.createdAt)}
                 </span>
               </div>
+              
               {sentimentColor && (
-                <Badge
-                  variant="default"
-                  size="sm"
-                  className={`home-history-sentiment-badge shrink-0 shadow-none text-[11px] font-semibold leading-none transition-opacity duration-200${isTruncated ? ' group-hover/item:opacity-80' : ''}`}
+                <div
+                  className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full transition-all duration-300 ${isViewing ? 'opacity-100' : 'opacity-80 group-hover/item:opacity-100'}`}
                   style={{
                     color: sentimentColor,
-                    borderColor: `${sentimentColor}30`,
-                    backgroundColor: `${sentimentColor}10`,
+                    backgroundColor: `${sentimentColor}15`,
                   }}
                 >
-                  {getOperationBadgeLabel(item.operationAdvice)} {item.sentimentScore}
-                </Badge>
+                  {getOperationBadgeLabel(item.operationAdvice)}
+                </div>
               )}
-            </div>
-            <div className="flex items-center gap-2 mt-1.5 opacity-80 group-hover/item:opacity-100 transition-opacity">
-              <span className="home-accent-chip px-1.5 py-0.5 text-[10px] font-mono tracking-wider">
-                {item.stockCode}
-              </span>
-              <span className="text-[11px] text-muted-text font-medium flex items-center gap-1">
-                <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {formatDateTime(item.createdAt)}
-              </span>
             </div>
           </div>
         </div>

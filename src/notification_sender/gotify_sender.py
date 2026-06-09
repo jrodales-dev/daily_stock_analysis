@@ -5,12 +5,13 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from urllib.parse import urlparse, urlunparse
 
 import requests
 
-from src.config import Config
+if TYPE_CHECKING:
+    from src.config import Config
 
 
 logger = logging.getLogger(__name__)
@@ -46,7 +47,7 @@ def resolve_gotify_message_endpoint(gotify_url: Optional[str]) -> Optional[str]:
 class GotifySender:
     """Send Markdown text notifications through Gotify's message API."""
 
-    def __init__(self, config: Config):
+    def __init__(self, config: 'Config'):
         self._gotify_url = getattr(config, "gotify_url", None)
         self._gotify_token = getattr(config, "gotify_token", None)
         self._webhook_verify_ssl = getattr(config, "webhook_verify_ssl", True)

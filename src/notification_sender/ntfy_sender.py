@@ -5,12 +5,13 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Optional, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple
 from urllib.parse import unquote, urlparse, urlunparse
 
 import requests
 
-from src.config import Config
+if TYPE_CHECKING:
+    from src.config import Config
 
 
 logger = logging.getLogger(__name__)
@@ -50,7 +51,7 @@ def resolve_ntfy_endpoint(ntfy_url: Optional[str]) -> Tuple[Optional[str], Optio
 class NtfySender:
     """Send Markdown text notifications through the ntfy JSON publish API."""
 
-    def __init__(self, config: Config):
+    def __init__(self, config: 'Config'):
         self._ntfy_url = getattr(config, "ntfy_url", None)
         self._ntfy_token = getattr(config, "ntfy_token", None)
         self._webhook_verify_ssl = getattr(config, "webhook_verify_ssl", True)

@@ -71,6 +71,7 @@ export const stocksApi = {
   async getQuote(stockCode: string): Promise<StockQuote> {
     const response = await apiClient.get(`/api/v1/stocks/${encodeURIComponent(stockCode)}/quote`);
     // Convert snake_case from backend to camelCase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data = response.data as any;
     return {
       stockCode: data.stock_code,
